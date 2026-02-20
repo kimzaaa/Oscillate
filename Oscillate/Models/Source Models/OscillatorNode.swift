@@ -3,7 +3,7 @@ import AVFoundation
 
 class OscillatorNode: SynthNode {
     @Published var waveform: Waveform = .sine
-    @Published var volume: Float = 0.1
+    @Published var volume: Float = 0.5
     
     // Thread-safe state for the audio render block
     private let state = OscillatorState()
@@ -32,9 +32,7 @@ class OscillatorNode: SynthNode {
         let state = self.state
         
         return AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
-            // Use local copies of parameters if safe, or access via state if atomic.
-            // Waveform and Volume are on self (MainActor usually), accessing from audio thread is technically unsafe if not protected.
-            // For simplicity, we'll read them. In a robust app, push changes to `state`.
+            // Use local copies of parameters if safe
             var currentWave = Waveform.sine
             var currentVol: Float = 0.1
             
@@ -44,12 +42,10 @@ class OscillatorNode: SynthNode {
             }
             
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            let limitVal: Float = 0.5 // Hard limit to avoid blowing speakers
+            let limitVal: Float = 0.5
             
             state.lock.lock()
             var activeNotes = state.activeNotes
-            
-            let count = max(1, Float(activeNotes.count))
             
             for frame in 0..<Int(frameCount) {
                 var sampleSum: Float = 0.0
@@ -75,18 +71,19 @@ class OscillatorNode: SynthNode {
                     activeNotes[i].phase = p
                 }
                 
-                // Simple volume scaling
-                let polyVolume = currentVol * 0.3 // Reduce individual volume to avoid clipping with chords
+                let polyVolume = currentVol * 0.3
                 let finalSample = max(-limitVal, min(limitVal, sampleSum * polyVolume))
                 
                 for buffer in ablPointer {
-                    let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                    buf[frame] = finalSample
+                    let ptr = UnsafeMutableBufferPointer<Float>(buffer)
+                    if frame < ptr.count {
+                        ptr[frame] = finalSample
+                    }
                 }
             }
             
             // Write back updated phases
-            state.activeNotes = activeNotes
+            state.activeNotes = activeNotes // Struct copy back
             state.lock.unlock()
             
             return noErr
@@ -116,7 +113,7 @@ class OscillatorNode: SynthNode {
                         Spacer()
                         Text("\(Int(volume * 100))%").font(.system(size: 8))
                     }
-                    Slider(value: volBind, in: 0...0.5)
+                    Slider(value: volBind, in: 0...1.0)
                         .accentColor(self.color)
                 }
             }
@@ -154,4 +151,5 @@ class OscillatorState {
         lock.unlock()
     }
 }
+
 

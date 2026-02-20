@@ -58,12 +58,16 @@ struct SandboxMain: View {
                         for node in viewModel.nodes {
                             if let osc = node as? OscillatorNode {
                                 osc.noteOn(frequency: freq)
+                            } else if let adsr = node as? ADSRNode {
+                                adsr.noteOn() // ADSR only needs to know a note started, doesn't care about frequency in this simple model
                             }
                         }
                     }, onNoteOff: { freq in
                         for node in viewModel.nodes {
                             if let osc = node as? OscillatorNode {
                                 osc.noteOff(frequency: freq)
+                            } else if let adsr = node as? ADSRNode {
+                                adsr.noteOff()
                             }
                         }
                     })

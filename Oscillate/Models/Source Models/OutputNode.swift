@@ -7,40 +7,19 @@ class OutputNode: SynthNode {
         super.init(name: name, color: color, icon: icon, position: position)
         self.avNode = AudioEngine.shared.mainMixer
         
-        // Start muted!
-        AudioEngine.shared.mainMixer.outputVolume = 0
+        // Ensure volume is on by default so keyboard triggers sound
+        AudioEngine.shared.mainMixer.outputVolume = 1.0
     }
     
     override func content() -> AnyView {
+        // Just show the icon, no button interaction
         return AnyView(
-            OutputButton()
+            Image(systemName: "speaker.wave.3.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 40, height: 40)
+                .foregroundColor(.white)
         )
     }
 }
-
-struct OutputButton: View {
-    @State private var isPressed = false
-    
-    var body: some View {
-        Image(systemName: isPressed ? "speaker.wave.3.fill" : "speaker.slash.fill")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 40, height: 40)
-            .foregroundColor(.white)
-            .scaleEffect(isPressed ? 1.2 : 1.0)
-            .animation(.spring(), value: isPressed)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        if !isPressed {
-                            isPressed = true
-                            AudioEngine.shared.mainMixer.outputVolume = 1.0
-                        }
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                        AudioEngine.shared.mainMixer.outputVolume = 0.0
-                    }
-            )
-    }
-}
+// Removed OutputButton struct as it's no longer needed for interaction
