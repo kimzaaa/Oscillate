@@ -1,9 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-import SwiftUI
-import AVFoundation
-
 class OscillatorNode: SynthNode {
     @Published var waveform: Waveform = .sine
     @Published var volume: Float = 0.1

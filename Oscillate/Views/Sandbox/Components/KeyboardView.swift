@@ -8,8 +8,14 @@ struct KeyboardView: View {
     
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(0..<12) { i in
-                KeyButton(noteName: noteNames[i], octave: octave, index: i, onNoteOn: onNoteOn, onNoteOff: onNoteOff)
+            ForEach(0..<24) { i in
+                KeyButton(
+                    noteName: noteNames[i % 12],
+                    octave: octave + (i / 12),
+                    index: i,
+                    onNoteOn: onNoteOn,
+                    onNoteOff: onNoteOff
+                )
             }
         }
         .padding(10)
@@ -44,20 +50,27 @@ struct KeyButton: View {
     }
     
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(isPressed ? (isBlackKey ? Color.gray : Color.yellow) : (isBlackKey ? Color.black : Color.white))
-                .cornerRadius(4)
-                .frame(width: isBlackKey ? 30 : 40, height: isBlackKey ? 80 : 120) // Black keys shorter
-            
-            VStack {
-                Spacer()
-                Text(noteName)
-                    .font(.caption)
-                    .foregroundColor(isPressed ? .black : (isBlackKey ? .white : .black))
-                    .padding(.bottom, 5)
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                Rectangle()
+                    .fill(isPressed ? (isBlackKey ? Color.gray : Color.yellow) : (isBlackKey ? Color.black : Color.white))
+                    .cornerRadius(4)
+                
+                if !isBlackKey {
+                    VStack {
+                        Spacer()
+                        Text(noteName)
+                            .font(.caption)
+                            .foregroundColor(isPressed ? .black : .black)
+                            .padding(.bottom, 5)
+                    }
+                }
             }
+            // Use available height. Black keys are 60% of height.
+            .frame(height: isBlackKey ? geometry.size.height * 0.6 : geometry.size.height)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
+        // Remove fixed frame
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -71,11 +84,5 @@ struct KeyButton: View {
                     onNoteOff(frequency)
                 }
         )
-        // Adjust z-index for black keys to sit on top if overlapping (layout logic needed for real piano)
-        // But here we just use HStack so they are side-by-side which is not a real piano layout.
-        // A real piano layout has black keys between white keys.
-        // For "1 octet keyboard", simple buttons are fine for now unless user insists on real layout.
-        // The user said "1 octet keyboard".
-        // I will implement a linear layout for simplicity but mark black keys.
     }
 }

@@ -50,25 +50,28 @@ struct SandboxMain: View {
                 .coordinateSpace(name: "CanvasSpace")
             }
             
-            VStack {
-                //AudioVisualizer()
-                 //   .padding(.top, 50)
-                Spacer()
-                
-                KeyboardView(onNoteOn: { freq in
-                    for node in viewModel.nodes {
-                        if let osc = node as? OscillatorNode {
-                            osc.noteOn(frequency: freq)
+            GeometryReader { geometry in
+                VStack {
+                    Spacer()
+                    
+                    KeyboardView(onNoteOn: { freq in
+                        for node in viewModel.nodes {
+                            if let osc = node as? OscillatorNode {
+                                osc.noteOn(frequency: freq)
+                            }
                         }
-                    }
-                }, onNoteOff: { freq in
-                    for node in viewModel.nodes {
-                        if let osc = node as? OscillatorNode {
-                            osc.noteOff(frequency: freq)
+                    }, onNoteOff: { freq in
+                        for node in viewModel.nodes {
+                            if let osc = node as? OscillatorNode {
+                                osc.noteOff(frequency: freq)
+                            }
                         }
-                    }
-                })
-                .padding(.bottom, 20)
+                    })
+                    .frame(height: geometry.size.height * 0.2)
+                    .padding(.horizontal, 20) // Add horizontal padding to make it narrower overall
+                    .padding(.bottom, 20)
+                }
+                .frame(maxHeight: .infinity, alignment: .bottom) // Align to bottom
             }
             // Removed .allowsHitTesting(false) so keyboard works
             
