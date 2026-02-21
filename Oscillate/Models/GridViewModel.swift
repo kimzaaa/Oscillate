@@ -102,6 +102,23 @@ class GridViewModel: ObservableObject {
         wires.removeAll { $0.id == wire.id }
     }
     
+    func removeNode(_ id: UUID) {
+        // Remove connected wires first
+        let connectedWires = wires.filter { $0.startNodeID == id || $0.endNodeID == id }
+        for wire in connectedWires {
+            removeWire(wire)
+        }
+        
+        // Remove the node itself
+        if let nodeIndex = nodes.firstIndex(where: { $0.id == id }) {
+            let node = nodes[nodeIndex]
+            if let avNode = node.avNode {
+                engine.detach(avNode)
+            }
+            nodes.remove(at: nodeIndex)
+        }
+    }
+    
     private func resetDrag() {
         draggingWireStart = nil
         draggingWireCurrent = nil

@@ -8,6 +8,7 @@ struct DraggableNode: View {
     var onStartWire: (CGPoint) -> Void
     var onUpdateWire: (CGPoint) -> Void
     var onEndWire: () -> Void
+    var onRemove: () -> Void
     
     @GestureState private var dragOffset = CGSize.zero
     
@@ -17,6 +18,9 @@ struct DraggableNode: View {
             .overlay(inputIndicator, alignment: .leading)
             .offset(dragOffset)
             .position(node.position)
+            .onTapGesture(count: 2) {
+                onRemove()
+            }
             .gesture(
                 // Kept minimumDistance: 10 to allow Sliders inside NodeView to work
                 DragGesture(minimumDistance: 10, coordinateSpace: .named("CanvasSpace"))

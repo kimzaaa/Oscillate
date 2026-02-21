@@ -14,7 +14,16 @@ struct SandboxMain: View {
     
     var body: some View {
         ZStack {
+            // Background Layer
             Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
+            
+            // Grid
+            GridBackground(
+                gridSize: 50, 
+                pan: CGSize(width: canvasOffset.width + dragOffset.width, height: canvasOffset.height + dragOffset.height),
+                zoom: zoomScale * magnifyBy
+            )
+            .edgesIgnoringSafeArea(.all)
             
             GeometryReader { geometry in
                 ZStack {
@@ -45,6 +54,9 @@ struct SandboxMain: View {
                             },
                             onEndWire: {
                                 viewModel.endWireDrag()
+                            },
+                            onRemove: {
+                                viewModel.removeNode(node.id)
                             }
                         )
                     }
