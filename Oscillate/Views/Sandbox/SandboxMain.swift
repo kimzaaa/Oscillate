@@ -5,8 +5,12 @@ struct SandboxMain: View {
     @State private var movingNodeID: UUID? = nil
     @State private var movingOffset: CGSize = .zero
     
-    // REMOVED: canvasOffset, dragTranslation, totalOffset
-    // The screen is now static, which fixes the jitter and touch conflicts.
+    // Zoom and Pan State
+    @State private var canvasOffset: CGSize = .zero
+    @State private var zoomScale: CGFloat = 1.0
+    // To smooth things or handle state during gesture
+    @GestureState private var magnifyBy: CGFloat = 1.0
+    @GestureState private var dragOffset: CGSize = .zero
     
     var body: some View {
         ZStack {
@@ -14,8 +18,6 @@ struct SandboxMain: View {
             
             GeometryReader { geometry in
                 ZStack {
-                    // REMOVED: Background DragGesture
-                    
                     WireLayer(
                         viewModel: viewModel,
                         movingNodeID: movingNodeID,
@@ -25,6 +27,7 @@ struct SandboxMain: View {
                     ForEach(viewModel.nodes) { node in
                         DraggableNode(
                             node: node,
+                            // Pass zoomScale removed
                             onDragChange: { offset in
                                 movingNodeID = node.id
                                 movingOffset = offset
@@ -35,7 +38,6 @@ struct SandboxMain: View {
                                 movingOffset = .zero
                             },
                             onStartWire: { location in
-                                // SIMPLIFIED: No longer need to subtract canvas offset
                                 viewModel.startWireDrag(from: node.id, at: location)
                             },
                             onUpdateWire: { location in
@@ -48,7 +50,32 @@ struct SandboxMain: View {
                     }
                 }
                 .coordinateSpace(name: "CanvasSpace")
+                .scaleEffect(zoomScale * magnifyBy)
+                .offset(x: canvasOffset.width + dragOffset.width, y: canvasOffset.height + dragOffset.height)
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .contentShape(Rectangle()) // Make the entire area hit-testable
+                .gesture(
+                    DragGesture(minimumDistance: 10)
+                        .updating($dragOffset) { value, state, _ in
+                            state = value.translation
+                        }
+                        .onEnded { value in
+                            canvasOffset.width += value.translation.width
+                            canvasOffset.height += value.translation.height
+                        }
+                )
+                .simultaneousGesture(
+                    MagnificationGesture()
+                        .updating($magnifyBy) { currentState, gestureState, _ in
+                            gestureState = currentState
+                        }
+                        .onEnded { value in
+                            zoomScale *= value
+                        }
+                )
             }
+            
+            GeometryReader { geometry in
             
             GeometryReader { geometry in
                 VStack {
