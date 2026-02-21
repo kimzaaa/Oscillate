@@ -80,44 +80,11 @@ struct KeyboardView: View {
                 ForEach(0..<noteCount, id: \.self) { i in
                     if isBlackKey(i) {
                         let whiteIndexObj = whiteKeyIndex(for: i)
-                        // Standard calculation places it after the white key at `whiteIndexObj`.
-                        // For C# (index 1), whiteIndexObj is 1 (index of C is 0, so count of white keys before C# is 1).
-                        // So C# is placed after the 1st white key. This is correct.
-                        // Wait, whiteKeyIndex(for: 1) where 0 is C (white).
-                        // i=0 (C) -> !isBlack -> count=1.
-                        // returns 1.
-                        // So C# is based on 1st white key (index 0).
-                        
-                        // Current logic:
-                        // let centeredOffset = (CGFloat(whiteIndexObj) * whiteKeyWidth) + whiteKeyWidth - (blackKeyWidth / 2)
-                        // If whiteIndexObj is 1 (meaning 1 white key before it), centeredOffset is:
-                        // (1 * W) + W - B/2 = 2W - B/2.
-                        // This places it on the right edge of the *second* white key (index 1, which is D). This is WRONG.
-                        
-                        // Let's trace carefully:
-                        // i=0 (C). whiteKeyIndex(0) -> 0.
-                        // i=1 (C#). isBlack. whiteKeyIndex(1) -> loop 0..<1. i=0 is C (white). count=1. Returns 1.
-                        // Layout: centeredOffset = (1 * W) + W - B/2 = 2W - B/2.
-                        // 2W is the right edge of the 2nd white key (D).
-                        // So C# is being drawn between D and E.
-                        
-                        // Fix: The black key C# comes *after* the first white key C.
-                        // The index of C is 0.
-                        // The coordinate of the right edge of C is (1 * W).
-                        // We want center of Black Key to be at (1 * W).
-                        // So offset x = (1 * W) - (B / 2).
-                        
-                        // whiteKeyIndex(for: i) returns the number of white keys *before* this note.
-                        // For C# (i=1), there is 1 white key before it (C). So returns 1.
-                        // We want to place it at (1 * whiteKeyWidth) - (blackKeyWidth / 2).
-                        
-                        let whiteIndexCount = CGFloat(whiteKeyIndex(for: i))
-                        // Shift black keys slightly right for better alignment
-                        let centeredOffset = (whiteIndexCount * whiteKeyWidth) - (blackKeyWidth / 2) + 2.5
+                        // Position relative to the start of the white keys container (which is at x=2)
+                        let centeredOffset = (CGFloat(whiteIndexObj) * whiteKeyWidth) + whiteKeyWidth - (blackKeyWidth / 2)
                         
                         Rectangle()
                             .fill(activeNotes.contains(i) ? Color.gray : Color.black)
-
                             .cornerRadius(4, corners: [.bottomLeft, .bottomRight])
                             .frame(width: blackKeyWidth, height: blackKeyHeight)
                             .position(x: centeredOffset + 2 + (blackKeyWidth/2), y: 2 + (blackKeyHeight/2)) 
