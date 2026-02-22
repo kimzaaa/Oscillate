@@ -16,7 +16,7 @@ struct NodeView: View {
             
             Spacer()
         }
-        .frame(width: 200, height: 200)
+        .frame(width: 250, height: 250)
         .background(node.color)
         .cornerRadius(12)
         .shadow(radius: 5)
