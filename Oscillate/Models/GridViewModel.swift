@@ -33,7 +33,7 @@ class GridViewModel: ObservableObject {
         case "ADSR": newNode = ADSRNode(position: spawnPoint)
         case "Resonance": newNode = ResonanceNode(position: spawnPoint)
         case "Reverb": newNode = ReverbNode(position: spawnPoint)
-        case "Distortion": newNode = DistortionNode(position: spawnPoint)
+        case "Filter": newNode = FilterNode(position: spawnPoint)
         case "Pitch": newNode = PitchPanNode(position: spawnPoint)
         default: return
         }
