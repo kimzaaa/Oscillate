@@ -32,7 +32,7 @@ struct NodeToolbar: View {
                 ToolbarItem(icon: "f.cursive", label: "RESO", color: .yellow) { 
                     viewModel.spawnNode(type: "Resonance") 
                 }
-                ToolbarItem(icon: "waveform.path.ecg", label: "FILT", color: .purple) { 
+                ToolbarItem(icon: "waveform.path.ecg", label: "FILT", color: .red) { 
                     viewModel.spawnNode(type: "Filter") 
                 }
                 ToolbarItem(icon: "music.note", label: "PITCH", color: .purple) { 

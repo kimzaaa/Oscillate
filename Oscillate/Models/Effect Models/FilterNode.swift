@@ -39,7 +39,7 @@ class FilterNode: SynthNode {
     private var originalCutoff: Float = 1000.0
     
     init(position: CGPoint) {
-        super.init(name: "Filter", color: .purple, icon: "waveform.path.ecg", position: position)
+        super.init(name: "Filter", color: .red, icon: "waveform.path.ecg", position: position)
         self.avNode = eq
         updateFilter()
     }
@@ -174,7 +174,7 @@ class FilterNode: SynthNode {
                             .foregroundColor(.gray)
                     }
                     Slider(value: cutoffBinding, in: 20...20000)
-                        .tint(.purple)
+                        .tint(.red)
                         .scaleEffect(0.8, anchor: .center) // Smaller slider
                         .padding(.vertical, -4) // Reduce slider padding
                 }
@@ -191,7 +191,7 @@ class FilterNode: SynthNode {
                             .foregroundColor(.gray)
                     }
                     Slider(value: resBinding, in: 0...10)
-                        .tint(.purple)
+                        .tint(.red)
                         .scaleEffect(0.8, anchor: .center)
                         .padding(.vertical, -4)
                 }
@@ -200,7 +200,7 @@ class FilterNode: SynthNode {
                 HStack(spacing: 8) {
                     Toggle("Auto", isOn: autoBinding)
                         .labelsHidden()
-                        .toggleStyle(SwitchToggleStyle(tint: .purple))
+                        .toggleStyle(SwitchToggleStyle(tint: .red))
                         .scaleEffect(0.6)
                         .frame(width: 30)
                     
@@ -294,14 +294,14 @@ struct FilterCurveView: View {
                 path.addLine(to: CGPoint(x: width, y: height))
             }
             
-            context.stroke(path, with: .color(.cyan), lineWidth: 2)
+            context.stroke(path, with: .color(.red), lineWidth: 2)
             
             var fillPath = path
             fillPath.addLine(to: CGPoint(x: width, y: height))
             fillPath.addLine(to: CGPoint(x: 0, y: height))
             fillPath.closeSubpath()
             context.fill(fillPath, with: .linearGradient(
-                Gradient(colors: [Color.cyan.opacity(0.4), Color.cyan.opacity(0.0)]),
+                Gradient(colors: [Color.red.opacity(0.4), Color.red.opacity(0.0)]),
                 startPoint: CGPoint(x: width / 2, y: 0),
                 endPoint: CGPoint(x: width / 2, y: height)
             ))
