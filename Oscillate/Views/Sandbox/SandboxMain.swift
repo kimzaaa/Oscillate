@@ -2,6 +2,9 @@ import SwiftUI
 
 struct SandboxMain: View {
     @StateObject var viewModel = GridViewModel()
+    @StateObject var sequencer = MidiSequencer() // Add sequencer
+    @State private var showFilePicker = false // File picker state
+    
     @State private var movingNodeID: UUID? = nil
     @State private var movingOffset: CGSize = .zero
     
@@ -88,8 +91,6 @@ struct SandboxMain: View {
             }
             
             GeometryReader { geometry in
-            
-            GeometryReader { geometry in
                 VStack {
                     Spacer()
                     
@@ -124,11 +125,70 @@ struct SandboxMain: View {
             
             HStack(spacing: 0) {
                 Spacer()
-                NodeToolbar(viewModel: viewModel)
-                    .frame(width: 160)
-                    .padding(.trailing, 20)
-                    .padding(.vertical, 40)
+                VStack(spacing: 20) {
+                    // MIDI Playback Button
+                    Button(action: {
+                        if sequencer.currentFile == nil {
+                            showFilePicker = true
+                        } else {
+                            sequencer.togglePlay()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
+                            Text(sequencer.currentFile == nil ? "Load MIDI" : (sequencer.isPlaying ? "Stop" : "Play MIDI"))
+                                .font(.caption.bold())
+                        }
+                        .padding(10)
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(20)
+                        .shadow(radius: 5)
+                    }
+                    .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.midi]) { result in
+                        switch result {
+                        case .success(let url):
+                            // Access security scoped resource
+                            if url.startAccessingSecurityScopedResource() {
+                                sequencer.load(url: url)
+                                // Handle cleanup later if needed, but for now we keep access
+                            }
+                        case .failure(let error):
+                            print("Error picking file: \(error.localizedDescription)")
+                        }
+                    }
+                    
+                    if sequencer.currentFile != nil {
+                        VStack(spacing: 5) {
+                            Text("Speed: \(String(format: "%.1fx", sequencer.playbackSpeed))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Slider(value: $sequencer.playbackSpeed, in: 0.1...3.0)
+                                .frame(width: 100)
+                                .tint(.blue)
+                        }
+                        .padding(8)
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(10)
+                    }
+                    
+                    Spacer()
+                    
+                    NodeToolbar(viewModel: viewModel)
+                        .frame(width: 160)
+                }
+                .padding(.trailing, 20)
+                .padding(.vertical, 40)
             }
+        }
+        .onAppear {
+             // Connect sequencer to view model
+             sequencer.onNoteOn = { freq in
+                 viewModel.noteOn(frequency: freq)
+             }
+             sequencer.onNoteOff = { freq in
+                 viewModel.noteOff(frequency: freq)
+             }
         }
     }
 }

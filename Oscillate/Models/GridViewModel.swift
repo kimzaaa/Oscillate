@@ -44,6 +44,31 @@ class GridViewModel: ObservableObject {
         }
     }
     
+    // Create Note Playing Helpers
+    func noteOn(frequency: Float) {
+        for node in nodes {
+            if let osc = node as? OscillatorNode {
+                osc.noteOn(frequency: frequency)
+            } else if let adsr = node as? ADSRNode {
+                adsr.noteOn()
+            } else if let filter = node as? FilterNode {
+                filter.noteOn()
+            }
+        }
+    }
+    
+    func noteOff(frequency: Float) {
+        for node in nodes {
+            if let osc = node as? OscillatorNode {
+                osc.noteOff(frequency: frequency)
+            } else if let adsr = node as? ADSRNode {
+                adsr.noteOff()
+            } else if let filter = node as? FilterNode {
+                filter.noteOff()
+            }
+        }
+    }
+
     func updateNodePosition(id: UUID, newPosition: CGPoint) {
         if let index = nodes.firstIndex(where: { $0.id == id }) {
             nodes[index].position = newPosition
