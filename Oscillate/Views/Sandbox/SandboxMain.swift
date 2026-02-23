@@ -8,7 +8,9 @@ struct SandboxMain: View {
         midiFilename: nil, // Allow user to pick file
         midiPlaybackSpeed: nil, // Allow user to change speed with slider
         availableNodes: ["Oscillator", "ADSR", "Reverb", "Resonance", "Filter", "Pitch"],
-        initialNodes: []
+        initialNodes: [],
+        hintText: nil,
+        playDialogueOnStart: nil
     )
     
     var body: some View {

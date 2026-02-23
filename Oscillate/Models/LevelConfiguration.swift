@@ -21,4 +21,10 @@ struct LevelConfiguration {
     /// Nodes to spawn immediately upon loading the level
     /// e.g. [("Oscillator", CGPoint(x: 300, y: 300))]
     let initialNodes: [(type: String, position: CGPoint)]
+    
+    /// Text to show when the hint button is pressed
+    let hintText: String?
+    
+    /// Audio file to play on start (e.g. "intro_dialogue.mp3")
+    let playDialogueOnStart: String?
 }

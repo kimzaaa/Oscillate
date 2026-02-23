@@ -11,7 +11,9 @@ struct Level1Main: View {
         availableNodes: ["Oscillator", "Output"], // Limited toolset
         initialNodes: [
             ("Oscillator", CGPoint(x: 200, y: 300))
-        ]
+        ],
+        hintText: "Connect the Oscillator to the Output using a wire. Tap the output node to hear sound.",
+        playDialogueOnStart: "lv1d1"
     )
     
     var body: some View {
