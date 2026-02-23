@@ -24,8 +24,8 @@ class GridViewModel: ObservableObject {
     }
     
     // NEW: Function for the Toolbar to call
-    func spawnNode(type: String) {
-        let spawnPoint = CGPoint(x: 300, y: 300)
+    func spawnNode(type: String, at position: CGPoint? = nil) {
+        let spawnPoint = position ?? CGPoint(x: 300, y: 300)
         var newNode: SynthNode?
         
         switch type {
@@ -35,12 +35,41 @@ class GridViewModel: ObservableObject {
         case "Reverb": newNode = ReverbNode(position: spawnPoint)
         case "Filter": newNode = FilterNode(position: spawnPoint)
         case "Pitch": newNode = PitchPanNode(position: spawnPoint)
+        case "Output": newNode = OutputNode(position: spawnPoint)
         default: return
         }
         
         if let node = newNode {
-            if let av = node.avNode { engine.attach(av) }
+            if let av = node.avNode { 
+                // Don't re-attach main mixer if it's the output node wrapper
+                if av !== engine.mainMixerNode {
+                    engine.attach(av) 
+                }
+            }
             DispatchQueue.main.async { self.nodes.append(node) }
+        }
+    }
+    
+    // Configure the level based on the configuration object
+    func setupLevel(config: LevelConfiguration) {
+        // Clear all existing nodes and wires
+        self.nodes.removeAll()
+        self.wires.removeAll()
+        
+        // Stop engine to clear state if needed, though usually we keep it running.
+        // Detach existing nodes to be clean? 
+        // For simplicity in this demo, we just clear the array, but ideally we should detach AVNodes.
+        
+        // Re-initialize default output node
+        let out = OutputNode(position: CGPoint(x: 900, y: 300))
+        if let av = out.avNode, av !== engine.mainMixerNode {
+            engine.attach(av)
+        }
+        self.nodes.append(out)
+        
+        // Spawn configured initial nodes
+        for (type, pos) in config.initialNodes {
+            spawnNode(type: type, at: pos)
         }
     }
     

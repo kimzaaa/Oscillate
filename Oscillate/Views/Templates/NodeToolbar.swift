@@ -5,6 +5,9 @@ struct NodeToolbar: View {
     // Use the viewModel directly.
     @ObservedObject var viewModel: GridViewModel
     
+    // Default to all nodes if not specified
+    var availableNodes: [String] = ["Oscillator", "ADSR", "Reverb", "Resonance", "Filter", "Pitch"]
+    
     let columns = [
         GridItem(.fixed(60), spacing: 10),
         GridItem(.fixed(60), spacing: 10)
@@ -18,25 +21,40 @@ struct NodeToolbar: View {
                 .padding(.horizontal, 5)
             
             LazyVGrid(columns: columns, spacing: 15) {
-                ToolbarItem(icon: "waveform.path", label: "OSC", color: .blue) {
-                    viewModel.spawnNode(type: "Oscillator")
+                if availableNodes.contains("Oscillator") {
+                    ToolbarItem(icon: "waveform.path", label: "OSC", color: .blue) {
+                        viewModel.spawnNode(type: "Oscillator")
+                    }
                 }
                 
-                ToolbarItem(icon: "envelope.fill", label: "ADSR", color: .green) {
-                    viewModel.spawnNode(type: "ADSR")
+                if availableNodes.contains("ADSR") {
+                    ToolbarItem(icon: "envelope.fill", label: "ADSR", color: .green) {
+                        viewModel.spawnNode(type: "ADSR")
+                    }
                 }
                 
-                ToolbarItem(icon: "fossil.shell.fill", label: "VERB", color: .orange) {
-                    viewModel.spawnNode(type: "Reverb")
+                if availableNodes.contains("Reverb") {
+                    ToolbarItem(icon: "fossil.shell.fill", label: "VERB", color: .orange) {
+                        viewModel.spawnNode(type: "Reverb")
+                    }
                 }
-                ToolbarItem(icon: "f.cursive", label: "RESO", color: .yellow) { 
-                    viewModel.spawnNode(type: "Resonance") 
+                
+                if availableNodes.contains("Resonance") {
+                    ToolbarItem(icon: "f.cursive", label: "RESO", color: .yellow) { 
+                        viewModel.spawnNode(type: "Resonance") 
+                    }
                 }
-                ToolbarItem(icon: "waveform.path.ecg", label: "FILT", color: .red) { 
-                    viewModel.spawnNode(type: "Filter") 
+                
+                if availableNodes.contains("Filter") {
+                    ToolbarItem(icon: "waveform.path.ecg", label: "FILT", color: .red) { 
+                        viewModel.spawnNode(type: "Filter") 
+                    }
                 }
-                ToolbarItem(icon: "music.note", label: "PITCH", color: .purple) { 
-                    viewModel.spawnNode(type: "Pitch" ) 
+                
+                if availableNodes.contains("Pitch") {
+                    ToolbarItem(icon: "music.note", label: "PITCH", color: .purple) { 
+                        viewModel.spawnNode(type: "Pitch" ) 
+                    }
                 }
             }
         }
