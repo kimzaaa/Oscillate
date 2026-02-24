@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import AVKit
 
 class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var isPlaying = false
@@ -17,9 +18,6 @@ class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
         } else {
              print("--- No MP3s found in Bundle ---")
         }
-
-        // Try finding file in root or subdirectories
-        var fileURL: URL?
         
         print("--- Finding audio file: \(filename) ---")
 
@@ -85,6 +83,79 @@ class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
         DispatchQueue.main.async {
             self.isPlaying = false
         }
+    }
+}
+
+struct LoopingVideo: View {
+    let fileName: String
+    let width: CGFloat
+    let height: CGFloat
+    
+    @State private var queuePlayer: AVQueuePlayer?
+    @State private var playerLooper: AVPlayerLooper?
+    
+    var body: some View {
+        Group {
+            if let p = queuePlayer {
+                VideoPlayer(player: p)
+                    .frame(width: width, height: height)
+                    .onAppear { p.play() }
+                    .onDisappear { p.pause() }
+            } else {
+                Rectangle()
+                    .fill(Color.black)
+                    .frame(width: width, height: height)
+                    .overlay(ProgressView())
+            }
+        }
+        .onAppear { setupPlayer() }
+    }
+    
+    private func setupPlayer() {
+        if queuePlayer != nil { return }
+        
+        var fileURL: URL?
+        
+        // Check if fileName is a remote URL
+        if let url = URL(string: fileName), url.scheme == "http" || url.scheme == "https" {
+            fileURL = url
+        } else {
+            // Basic bundle search
+            if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4") {
+                fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Lv1") {
+                 fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources/Lv1") {
+                 fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources") {
+                 fileURL = url
+            }
+            else {
+                 // Recursive search fallback
+                 if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
+                     for case let file as URL in enumerator {
+                         if file.lastPathComponent.lowercased() == "\(fileName.lowercased()).mp4" {
+                             fileURL = file
+                             break
+                         }
+                     }
+                 }
+            }
+        }
+        
+        guard let url = fileURL else {
+            print("Could not find video file: \(fileName)")
+            return
+        }
+        
+        let item = AVPlayerItem(url: url)
+        let player = AVQueuePlayer(playerItem: item)
+        self.playerLooper = AVPlayerLooper(player: player, templateItem: item)
+        self.queuePlayer = player
+        player.play()
     }
 }
 
@@ -336,11 +407,16 @@ struct SynthLevelView: View {
                         Spacer()
                         
                         // Placeholder Square
-                        Rectangle()
-                            .fill(Color.gray)
-                            .frame(width: 200, height: 200)
-                            .overlay(Text("Dialogue Placeholder").foregroundColor(.white))
-                            .shadow(radius: 10)
+                        if let videoFile = config.playVideoOnStart, let size = config.videoSize {
+                            LoopingVideo(fileName: videoFile, width: size.width, height: size.height)
+                                .shadow(radius: 10)
+                        } else {
+                            Rectangle()
+                                .fill(Color.gray)
+                                .frame(width: 200, height: 200)
+                                .overlay(Text("Dialogue Placeholder").foregroundColor(.white))
+                                .shadow(radius: 10)
+                        }
                         
                         Spacer()
                         

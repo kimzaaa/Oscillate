@@ -13,7 +13,9 @@ struct Level1Main: View {
             ("Oscillator", CGPoint(x: 200, y: 300))
         ],
         hintText: "Connect the Oscillator to the Output using a wire. Tap the output node to hear sound.",
-        playDialogueOnStart: "lv1d1"
+        playDialogueOnStart: "lv1d1",
+        playVideoOnStart: "placeholder_video", // Add your MP4 file with this name to Resources
+        videoSize: CGSize(width: 300, height: 300)
     )
     
     var body: some View {

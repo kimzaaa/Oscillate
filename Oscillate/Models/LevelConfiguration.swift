@@ -27,4 +27,10 @@ struct LevelConfiguration {
     
     /// Audio file to play on start (e.g. "intro_dialogue.mp3")
     let playDialogueOnStart: String?
+    
+    /// Video file to play on start (e.g. "intro_video.mp4")
+    let playVideoOnStart: String?
+    
+    /// Size of the video player
+    let videoSize: CGSize?
 }

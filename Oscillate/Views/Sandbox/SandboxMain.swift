@@ -10,7 +10,9 @@ struct SandboxMain: View {
         availableNodes: ["Oscillator", "ADSR", "Reverb", "Resonance", "Filter", "Pitch"],
         initialNodes: [],
         hintText: nil,
-        playDialogueOnStart: nil
+        playDialogueOnStart: nil,
+        playVideoOnStart: nil,
+        videoSize: nil
     )
     
     var body: some View {
