@@ -621,7 +621,26 @@ struct SynthLevelView: View {
     
     func checkSetting(node: SynthNode, setting: String, target: Double, tolerance: Double?) -> Bool {
         if let oscillator = node as? OscillatorNode {
-            // Check Oscillator Settings
+            if setting == "waveform" {
+                // Map Waveform Enum to Double index
+                // 0: Sine, 1: Square, 2: Triangle, 3: Saw
+                let current: Double
+                switch oscillator.waveform {
+                case .sine: current = 0.0
+                case .square: current = 1.0
+                case .triangle: current = 2.0
+                case .saw: current = 3.0
+                }
+                
+                return current == target
+            }
+            if setting == "volume" {
+                let vol = Double(oscillator.volume)
+                if let tol = tolerance {
+                    return abs(vol - target) <= tol
+                }
+                return vol == target
+            }
         }
         
         if let filter = node as? FilterNode {
