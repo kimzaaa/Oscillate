@@ -33,4 +33,34 @@ struct LevelConfiguration {
     
     /// Size of the video player
     let videoSize: CGSize?
+    
+    // MARK: - Level Goal System
+    
+    /// Defines a required connection between two node types
+    struct ConnectionGoal {
+        let fromType: String // e.g. "Oscillator"
+        let toType: String   // e.g. "Output"
+    }
+    
+    /// Defines required settings for a specific node type
+    struct SettingGoal {
+        let nodeType: String        // e.g. "Oscillator"
+        let settingName: String     // e.g. "waveform", "frequency", "cutoff"
+        let targetValue: Double     // The expected value (use 0/1 for enums if needed, or mapping)
+        let tolerance: Double?      // Allowable difference (+/-). If nil, must be exact (or string match)
+    }
+    
+    /// The conditions required to "beat" this level
+    let requiredConnections: [ConnectionGoal]
+    let requiredSettings: [SettingGoal]
+    
+    /// Message to show when goals are met
+    let successMessage: String?
+    
+    /// The name of the next view/level to navigate to
+    let nextLevelViewName: String?
+    
+    // MARK: - Interaction Goals
+    /// Check if user has played at least one note on the keyboard
+    let requireNoteInput: Bool
 }

@@ -177,6 +177,14 @@ struct SynthLevelView: View {
     @GestureState private var magnifyBy: CGFloat = 1.0
     @GestureState private var dragOffset: CGSize = .zero
     
+    // Level Completion State
+    @State private var isLevelComplete = false
+    @State private var showSuccessOverlay = false
+    @State private var hasPlayedNote = false
+    
+    // Timer for checking conditions
+    let checkTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    
     var body: some View {
         ZStack {
             // Background Layer
@@ -259,6 +267,7 @@ struct SynthLevelView: View {
                         
                         KeyboardView(onNoteOn: { freq in
                             viewModel.noteOn(frequency: freq)
+                            hasPlayedNote = true // Mark as played
                         }, onNoteOff: { freq in
                             viewModel.noteOff(frequency: freq)
                         })
@@ -437,6 +446,76 @@ struct SynthLevelView: View {
                 }
                 .transition(.opacity)
             }
+            
+            // Success / Next Level Overlay
+            if showSuccessOverlay {
+                if config.requireNoteInput {
+                    // Non-blocking UI for levels where you need to keep playing
+                    VStack {
+                        HStack {
+                            Spacer()
+                            
+                            if let nextLevel = config.nextLevelViewName {
+                                NavigationLink(destination: destinationView(for: nextLevel)) {
+                                    HStack {
+                                        Text("Next Level")
+                                        Image(systemName: "arrow.right.circle.fill")
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Color.green)
+                                    .cornerRadius(30)
+                                    .shadow(radius: 5)
+                                }
+                                .padding(.top, 50)
+                                .padding(.trailing, 20)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                            }
+                        }
+                        Spacer()
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                } else {
+                    // Blocking Overlay for standard puzzle levels
+                    VStack(spacing: 20) {
+                        Text("LEVEL COMPLETE")
+                            .font(.largeTitle.bold())
+                            .foregroundColor(.green)
+                            .shadow(radius: 5)
+                        
+                        if let msg = config.successMessage {
+                            Text(msg)
+                                .font(.title2)
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(10)
+                        }
+                        
+                        if let nextLevel = config.nextLevelViewName {
+                            NavigationLink(destination: destinationView(for: nextLevel)) {
+                                Text("Next Level")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(width: 200)
+                                    .background(Color.blue)
+                                    .cornerRadius(10)
+                                    .shadow(radius: 5)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.6))
+                    .transition(.opacity)
+                    .edgesIgnoringSafeArea(.all)
+                }
+            }
+        }
+        .onReceive(checkTimer) { _ in
+            checkGoals()
         }
         .onAppear {
              viewModel.setupLevel(config: config)
@@ -465,5 +544,93 @@ struct SynthLevelView: View {
                  dialogueController.play(filename: dialogueFile)
              }
         }
+    }
+
+    // MARK: - Navigation Helper
+    @ViewBuilder
+    func destinationView(for name: String) -> some View {
+        if name == "Level1_1" {
+            Level1_1Main()
+        } else if name == "Level1_2" {
+            // Placeholder if you have it
+            EmptyView()
+        } else {
+            EmptyView()
+        }
+    }
+    
+    // MARK: - Goal Checking Logic
+    func checkGoals() {
+        guard !isLevelComplete else { return }
+        
+        // If there are no goals, do nothing (Sandbox mode)
+        if config.requiredConnections.isEmpty && config.requiredSettings.isEmpty {
+            return
+        }
+        
+        // 0. Check Interaction Goals (Have they played a note?)
+        if config.requireNoteInput && !hasPlayedNote {
+             return
+        }
+        
+        var availableWires = viewModel.wires
+        
+        for goal in config.requiredConnections {
+            if let index = availableWires.firstIndex(where: { wire in
+                let startNode = viewModel.nodes.first(where: { $0.id == wire.startNodeID })
+                let endNode = viewModel.nodes.first(where: { $0.id == wire.endNodeID })
+                
+                guard let s = startNode, let e = endNode else { return false }
+                
+                let sType = String(describing: type(of: s)).replacingOccurrences(of: "Node", with: "")
+                let eType = String(describing: type(of: e)).replacingOccurrences(of: "Node", with: "")
+
+                return sType == goal.fromType && eType == goal.toType
+            }) {
+                availableWires.remove(at: index)
+            } else {
+                return
+            }
+        }
+        
+        for goal in config.requiredSettings {
+            let nodes = viewModel.nodes.filter { node in
+                let typeName = String(describing: type(of: node)).replacingOccurrences(of: "Node", with: "")
+                return typeName == goal.nodeType
+            }
+            
+            let matchFound = nodes.contains { node in
+                checkSetting(node: node, setting: goal.settingName, target: goal.targetValue, tolerance: goal.tolerance)
+            }
+            
+            if !matchFound {
+                return
+            }
+        }
+        
+        withAnimation {
+            isLevelComplete = true
+            showSuccessOverlay = true
+        }
+    }
+    
+    func checkSetting(node: SynthNode, setting: String, target: Double, tolerance: Double?) -> Bool {
+        if let oscillator = node as? OscillatorNode {
+            // Check Oscillator Settings
+        }
+        
+        if let filter = node as? FilterNode {
+            if setting == "cutoffFrequency" {
+                let val = Double(filter.cutoffFrequency)
+                if let tol = tolerance {
+                    return abs(val - target) <= tol
+                }
+                return val == target
+            }
+        }
+        
+        // Default to true if setting can't be checked (or fail?)
+        // To be safe, let's fail if we don't know the setting
+        return true 
     }
 }

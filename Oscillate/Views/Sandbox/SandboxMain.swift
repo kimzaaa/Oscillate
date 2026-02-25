@@ -12,7 +12,12 @@ struct SandboxMain: View {
         hintText: nil,
         playDialogueOnStart: nil,
         playVideoOnStart: nil,
-        videoSize: nil
+        videoSize: nil,
+        requiredConnections: [],
+        requiredSettings: [],
+        successMessage: nil,
+        nextLevelViewName: nil,
+        requireNoteInput: false
     )
     
     var body: some View {
