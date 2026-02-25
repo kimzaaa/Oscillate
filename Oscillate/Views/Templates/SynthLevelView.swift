@@ -181,6 +181,7 @@ struct SynthLevelView: View {
     @State private var isLevelComplete = false
     @State private var showSuccessOverlay = false
     @State private var hasPlayedNote = false
+    @State private var showFinalOverlay = false // New state for second step of note-input levels
     
     // Timer for checking conditions
     let checkTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
@@ -449,35 +450,38 @@ struct SynthLevelView: View {
             
             // Success / Next Level Overlay
             if showSuccessOverlay {
-                if config.requireNoteInput {
+                if config.requireNoteInput && !showFinalOverlay {
                     // Non-blocking UI for levels where you need to keep playing
                     VStack {
                         HStack {
                             Spacer()
                             
-                            if let nextLevel = config.nextLevelViewName {
-                                NavigationLink(destination: destinationView(for: nextLevel)) {
-                                    HStack {
-                                        Text("Next Level")
-                                        Image(systemName: "arrow.right.circle.fill")
-                                    }
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.green)
-                                    .cornerRadius(30)
-                                    .shadow(radius: 5)
+                            // "Next Level" button that triggers the overlay
+                            Button(action: {
+                                withAnimation {
+                                    showFinalOverlay = true // Show the blocking overlay now
                                 }
-                                .padding(.top, 50)
-                                .padding(.trailing, 20)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                            }) {
+                                HStack {
+                                    Text("Next Level")
+                                    Image(systemName: "arrow.right.circle.fill")
+                                }
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.green)
+                                .cornerRadius(30)
+                                .shadow(radius: 5)
                             }
+                            .padding(.top, 50)
+                            .padding(.trailing, 20)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                         Spacer()
                     }
                     .edgesIgnoringSafeArea(.all)
                 } else {
-                    // Blocking Overlay for standard puzzle levels
+                    // Blocking Overlay (Used for Puzzle levels OR Note-levels after button press)
                     VStack(spacing: 20) {
                         Text("LEVEL COMPLETE")
                             .font(.largeTitle.bold())
@@ -494,9 +498,10 @@ struct SynthLevelView: View {
                                 .cornerRadius(10)
                         }
                         
+                        // Actual Navigation Link
                         if let nextLevel = config.nextLevelViewName {
                             NavigationLink(destination: destinationView(for: nextLevel)) {
-                                Text("Next Level")
+                                Text("Continue")
                                     .font(.headline)
                                     .foregroundColor(.white)
                                     .padding()
@@ -508,7 +513,7 @@ struct SynthLevelView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.6))
+                    .background(Color.black.opacity(0.8)) // Darker background for final overlay
                     .transition(.opacity)
                     .edgesIgnoringSafeArea(.all)
                 }
