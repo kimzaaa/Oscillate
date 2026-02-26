@@ -10,7 +10,7 @@ struct Level1Main: View {
         midiPlaybackSpeed: 1.0, // Fixed speed
         availableNodes: ["Oscillator", "Output"], // Limited toolset
         initialNodes: [
-            ("Oscillator", CGPoint(x: 200, y: 300))
+            ("Oscillator", CGPoint(x: 200, y: 300), nil)
         ],
         hintText: "Connect the Oscillator to the Output using a wire. Tap the output node to hear sound.",
         playDialogueOnStart: "lv1d1",

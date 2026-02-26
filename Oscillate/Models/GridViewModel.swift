@@ -24,12 +24,23 @@ class GridViewModel: ObservableObject {
     }
     
     // NEW: Function for the Toolbar to call
-    func spawnNode(type: String, at position: CGPoint? = nil) {
+    func spawnNode(type: String, at position: CGPoint? = nil, waveform: String? = nil) {
         let spawnPoint = position ?? CGPoint(x: 300, y: 300)
         var newNode: SynthNode?
         
         switch type {
-        case "Oscillator": newNode = OscillatorNode(position: spawnPoint)
+        case "Oscillator":
+            let osc = OscillatorNode(position: spawnPoint)
+            if let waveformRaw = waveform {
+                switch waveformRaw.lowercased() {
+                case "sine": osc.waveform = .sine
+                case "square": osc.waveform = .square
+                case "triangle": osc.waveform = .triangle
+                case "saw": osc.waveform = .saw
+                default: break
+                }
+            }
+            newNode = osc
         case "ADSR": newNode = ADSRNode(position: spawnPoint)
         case "Resonance": newNode = ResonanceNode(position: spawnPoint)
         case "Reverb": newNode = ReverbNode(position: spawnPoint)
@@ -68,8 +79,8 @@ class GridViewModel: ObservableObject {
         self.nodes.append(out)
         
         // Spawn configured initial nodes
-        for (type, pos) in config.initialNodes {
-            spawnNode(type: type, at: pos)
+        for (type, pos, waveform) in config.initialNodes {
+            spawnNode(type: type, at: pos, waveform: waveform)
         }
     }
     

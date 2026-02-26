@@ -6,6 +6,39 @@ class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var isPlaying = false
     private var player: AVAudioPlayer?
     
+    static func resolveAudioURL(filename: String) -> URL? {
+        var fileURL: URL?
+        
+        if let url = Bundle.main.url(forResource: filename, withExtension: "mp3") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Lv1") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources/Lv1") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "resources/lv") {
+            fileURL = url
+        }
+        
+        if fileURL == nil {
+            if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
+                for case let fileURLCandidate as URL in enumerator {
+                    if fileURLCandidate.lastPathComponent.lowercased() == "\(filename.lowercased()).mp3" {
+                        fileURL = fileURLCandidate
+                        break
+                    }
+                }
+            }
+        }
+        
+        return fileURL
+    }
+    
     func play(filename: String) {
         
         // Debugging: Print all MP3s found in the bundle to see where they are
@@ -16,48 +49,13 @@ class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
             }
             print("--- End Resources ---")
         } else {
-             print("--- No MP3s found in Bundle ---")
+            print("--- No MP3s found in Bundle ---")
         }
         
         print("--- Finding audio file: \(filename) ---")
-
-        // Try finding file in root or subdirectories
-        var fileURL: URL?
         
-        // Check root first
-        if let url = Bundle.main.url(forResource: filename, withExtension: "mp3") {
-            fileURL = url
-        }
-        // Check in Lv1 (common if Resources is a group but Lv1 is a folder ref, or just flattened differently)
-        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Lv1") {
-             fileURL = url
-        }
-        // Check in Resources/Lv1
-        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources/Lv1") {
-             fileURL = url
-        }
-        // Check in Resources
-        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources") {
-             fileURL = url
-        }
-        // Check in resources/lv (user specified path, might be lowercase in bundle)
-        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "resources/lv") {
-             fileURL = url
-        }
+        let fileURL = Self.resolveAudioURL(filename: filename)
         
-        // Final fallback: Search ALL mp3s in bundle recursively to find filename match
-        if fileURL == nil {
-             if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
-                 for case let fileURLCandidate as URL in enumerator {
-                     if fileURLCandidate.lastPathComponent.lowercased() == "\(filename.lowercased()).mp3" {
-                         print("Found by recursive search: \(fileURLCandidate)")
-                         fileURL = fileURLCandidate
-                         break
-                     }
-                 }
-             }
-        }
-
         guard let url = fileURL else {
             print("Could not find audio file: \(filename)")
             return
@@ -125,24 +123,24 @@ struct LoopingVideo: View {
                 fileURL = url
             }
             else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Lv1") {
-                 fileURL = url
+                fileURL = url
             }
             else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources/Lv1") {
-                 fileURL = url
+                fileURL = url
             }
             else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources") {
-                 fileURL = url
+                fileURL = url
             }
             else {
-                 // Recursive search fallback
-                 if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
-                     for case let file as URL in enumerator {
-                         if file.lastPathComponent.lowercased() == "\(fileName.lowercased()).mp4" {
-                             fileURL = file
-                             break
-                         }
-                     }
-                 }
+                // Recursive search fallback
+                if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
+                    for case let file as URL in enumerator {
+                        if file.lastPathComponent.lowercased() == "\(fileName.lowercased()).mp4" {
+                            fileURL = file
+                            break
+                        }
+                    }
+                }
             }
         }
         
@@ -168,6 +166,7 @@ struct SynthLevelView: View {
     
     @State private var showFilePicker = false
     @State private var showHintAlert = false
+    @State private var hintAudioPlayer: AVAudioPlayer?
     
     @State private var movingNodeID: UUID? = nil
     @State private var movingOffset: CGSize = .zero
@@ -299,7 +298,22 @@ struct SynthLevelView: View {
                         }
                         .padding([.top, .trailing], 20)
                         .alert(isPresented: $showHintAlert) {
-                            Alert(title: Text("Hint"), message: Text(config.hintText ?? ""), dismissButton: .default(Text("OK")))
+                            if let hintAudio = config.hintAudioFilename {
+                                return Alert(
+                                    title: Text("Hint"),
+                                    message: Text(config.hintText ?? ""),
+                                    primaryButton: .default(Text("Play Audio")) {
+                                        playHintAudio(filename: hintAudio)
+                                    },
+                                    secondaryButton: .default(Text("OK"))
+                                )
+                            } else {
+                                return Alert(
+                                    title: Text("Hint"),
+                                    message: Text(config.hintText ?? ""),
+                                    dismissButton: .default(Text("OK"))
+                                )
+                            }
                         }
                     }
                     
@@ -328,8 +342,8 @@ struct SynthLevelView: View {
                     // I'll put MIDI controls top-center for now.
                     if config.showMidi {
                         HStack {
-                           Spacer()
-                           if let _ = config.midiFilename {
+                            Spacer()
+                            if let _ = config.midiFilename {
                                 // Hardcoded MIDI path
                                 Button(action: {
                                     sequencer.togglePlay()
@@ -455,7 +469,6 @@ struct SynthLevelView: View {
                     VStack {
                         HStack {
                             Spacer()
-                            
                             // "Next Level" button that triggers the overlay
                             Button(action: {
                                 withAnimation {
@@ -474,8 +487,8 @@ struct SynthLevelView: View {
                                 .shadow(radius: 5)
                             }
                             .padding(.top, 50)
-                            .padding(.trailing, 20)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            Spacer()
                         }
                         Spacer()
                     }
@@ -523,43 +536,74 @@ struct SynthLevelView: View {
             checkGoals()
         }
         .onAppear {
-             viewModel.setupLevel(config: config)
-             
-             // Setup Sequencer
-             sequencer.onNoteOn = { freq in
-                 viewModel.noteOn(frequency: freq)
-             }
-             sequencer.onNoteOff = { freq in
-                 viewModel.noteOff(frequency: freq)
-             }
-             
-             if let filename = config.midiFilename {
-                 if let url = Bundle.main.url(forResource: filename, withExtension: "mid") ?? Bundle.main.url(forResource: filename, withExtension: "midi") {
-                     sequencer.load(url: url)
-                 } else {
-                     print("Could not find MIDI file: \(filename)")
-                 }
-             }
-             
-             if let speed = config.midiPlaybackSpeed {
-                 sequencer.playbackSpeed = speed
-             }
-             
-             if let dialogueFile = config.playDialogueOnStart {
-                 dialogueController.play(filename: dialogueFile)
-             }
+            viewModel.setupLevel(config: config)
+            
+            // Setup Sequencer
+            sequencer.onNoteOn = { freq in
+                viewModel.noteOn(frequency: freq)
+            }
+            sequencer.onNoteOff = { freq in
+                viewModel.noteOff(frequency: freq)
+            }
+            
+            if let filename = config.midiFilename {
+                if let url = Bundle.main.url(forResource: filename, withExtension: "mid") ?? Bundle.main.url(forResource: filename, withExtension: "midi") {
+                    sequencer.load(url: url)
+                } else {
+                    print("Could not find MIDI file: \(filename)")
+                }
+            }
+            
+            if let speed = config.midiPlaybackSpeed {
+                sequencer.playbackSpeed = speed
+            }
+            
+            if let dialogueFile = config.playDialogueOnStart {
+                dialogueController.play(filename: dialogueFile)
+            }
         }
     }
-
+    
     // MARK: - Navigation Helper
+    func playHintAudio(filename: String) {
+        guard let url = DialogueController.resolveAudioURL(filename: filename) else {
+            print("Could not find hint audio file: \(filename)")
+            return
+        }
+        
+        do {
+            hintAudioPlayer = try AVAudioPlayer(contentsOf: url)
+            hintAudioPlayer?.prepareToPlay()
+            hintAudioPlayer?.play()
+        } catch {
+            print("Error playing hint audio: \(error.localizedDescription)")
+        }
+    }
+    
     @ViewBuilder
     func destinationView(for name: String) -> some View {
         if name == "Level1_1" {
             Level1_1Main()
         } else if name == "Level1_2" {
-            // Placeholder if you have it
-            EmptyView()
-        } else {
+            Level1_2Main()
+        } else if name == "Level1_3"{
+            Level1_3Main()
+        } else if name == "Level2"{
+            Level2Main()
+        } else if name == "Level2_1"{
+            Level2_1Main()
+        } else if name == "Level2_2"{
+            Level2_2Main()
+        } else if name == "Level2_3" {
+            Level2_3Main()
+        } else if name == "Level3_1"{
+            Level3_1Main()
+        } else if name == "Level3_2" {
+            Level3_2Main()
+        } else if name == "Level4_1" {
+            Level4_1Main()
+        }
+        else {
             EmptyView()
         }
     }
@@ -575,7 +619,7 @@ struct SynthLevelView: View {
         
         // 0. Check Interaction Goals (Have they played a note?)
         if config.requireNoteInput && !hasPlayedNote {
-             return
+            return
         }
         
         var availableWires = viewModel.wires
@@ -587,9 +631,12 @@ struct SynthLevelView: View {
                 
                 guard let s = startNode, let e = endNode else { return false }
                 
-                let sType = String(describing: type(of: s)).replacingOccurrences(of: "Node", with: "")
-                let eType = String(describing: type(of: e)).replacingOccurrences(of: "Node", with: "")
-
+                var sType = String(describing: type(of: s)).replacingOccurrences(of: "Node", with: "")
+                var eType = String(describing: type(of: e)).replacingOccurrences(of: "Node", with: "")
+                
+                if sType == "PitchPan" { sType = "Pitch" }
+                if eType == "PitchPan" { eType = "Pitch" }
+                
                 return sType == goal.fromType && eType == goal.toType
             }) {
                 availableWires.remove(at: index)
@@ -600,7 +647,8 @@ struct SynthLevelView: View {
         
         for goal in config.requiredSettings {
             let nodes = viewModel.nodes.filter { node in
-                let typeName = String(describing: type(of: node)).replacingOccurrences(of: "Node", with: "")
+                var typeName = String(describing: type(of: node)).replacingOccurrences(of: "Node", with: "")
+                if typeName == "PitchPan" { typeName = "Pitch" }
                 return typeName == goal.nodeType
             }
             
@@ -660,6 +708,21 @@ struct SynthLevelView: View {
             case "decay": val = Double(adsr.decay)
             case "sustain": val = Double(adsr.sustain)
             case "release": val = Double(adsr.release)
+            default: return false
+            }
+            
+            if let tol = tolerance {
+                return abs(val - target) <= tol
+            }
+            return val == target
+        }
+        
+        if let pitchNode = node as? PitchPanNode {
+            let val: Double
+            switch setting {
+            case "basePitch": val = Double(pitchNode.basePitch)
+            case "finePitch": val = Double(pitchNode.finePitch)
+            case "pitch": val = Double(pitchNode.basePitch + pitchNode.finePitch)
             default: return false
             }
             

@@ -19,12 +19,17 @@ struct LevelConfiguration {
     let availableNodes: [String]
     
     /// Nodes to spawn immediately upon loading the level
-    /// e.g. [("Oscillator", CGPoint(x: 300, y: 300))]
-    let initialNodes: [(type: String, position: CGPoint)]
+    /// e.g. [("Oscillator", CGPoint(x: 300, y: 300), "Sine")]
+    /// Third value is optional waveform and only applies to Oscillator nodes.
+    /// Supported values: "Sine", "Square", "Triangle", "Saw" (case-insensitive).
+    let initialNodes: [(type: String, position: CGPoint, waveform: String?)]
     
     /// Text to show when the hint button is pressed
     let hintText: String?
-    
+
+    /// Optional audio file (without extension) to play from the hint popup. nil = no audio button.
+    let hintAudioFilename: String? = nil
+
     /// Audio file to play on start (e.g. "intro_dialogue.mp3")
     let playDialogueOnStart: String?
     
