@@ -653,6 +653,22 @@ struct SynthLevelView: View {
             }
         }
         
+        if let adsr = node as? ADSRNode {
+            let val: Double
+            switch setting {
+            case "attack": val = Double(adsr.attack)
+            case "decay": val = Double(adsr.decay)
+            case "sustain": val = Double(adsr.sustain)
+            case "release": val = Double(adsr.release)
+            default: return false
+            }
+            
+            if let tol = tolerance {
+                return abs(val - target) <= tol
+            }
+            return val == target
+        }
+        
         // Default to true if setting can't be checked (or fail?)
         // To be safe, let's fail if we don't know the setting
         return true 
