@@ -5,14 +5,13 @@ class OscillatorNode: SynthNode {
     @Published var waveform: Waveform = .sine
     @Published var volume: Float = 0.5
     
-    // Thread-safe state for the audio render block
     private let state = OscillatorState()
     
     enum Waveform: String, CaseIterable {
         case sine = "Sine", square = "Square", triangle = "Triangle", saw = "Saw"
     }
     
-    override init(name: String = "Poly Osc", color: Color = .blue, icon: String = "wave.3.forward", position: CGPoint) {
+    override init(name: String = "Osc", color: Color = .blue, icon: String = "wave.3.forward", position: CGPoint) {
         super.init(name: name, color: color, icon: icon, position: position)
         self.avNode = createSourceNode()
     }
@@ -27,18 +26,15 @@ class OscillatorNode: SynthNode {
     
     private func createSourceNode() -> AVAudioSourceNode {
         let sampleRate: Float = 44100.0
-        
-        // Capture state strongly. The node retains the state.
         let state = self.state
         
         return AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
-            // Use local copies of parameters if safe
             var currentWave = Waveform.sine
             var currentVol: Float = 0.1
             
             if let self = self {
-                 currentWave = self.waveform
-                 currentVol = self.volume
+                currentWave = self.waveform
+                currentVol = self.volume
             }
             
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
@@ -50,7 +46,6 @@ class OscillatorNode: SynthNode {
             for frame in 0..<Int(frameCount) {
                 var sampleSum: Float = 0.0
                 
-                // Iterate through notes
                 for i in 0..<activeNotes.count {
                     let phaseIncrement = (2.0 * Float.pi * activeNotes[i].frequency) / sampleRate
                     var p = activeNotes[i].phase
@@ -82,8 +77,7 @@ class OscillatorNode: SynthNode {
                 }
             }
             
-            // Write back updated phases
-            state.activeNotes = activeNotes // Struct copy back
+            state.activeNotes = activeNotes
             state.lock.unlock()
             
             return noErr
@@ -105,6 +99,7 @@ class OscillatorNode: SynthNode {
                     ForEach(Waveform.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(MenuPickerStyle())
+                .accentColor(.white)
                 .labelsHidden()
                 
                 VStack(spacing: 2) {
@@ -114,18 +109,15 @@ class OscillatorNode: SynthNode {
                         Text("\(Int(volume * 100))%").font(.system(size: 8))
                     }
                     Slider(value: volBind, in: 0...1.0)
-                        .accentColor(self.color)
+                        .accentColor(.green)
                 }
             }
                 .padding(12)
                 .frame(width: 140, height: 140)
-                .background(Color.black.opacity(0.8))
-                .cornerRadius(12)
         )
     }
 }
 
-// Helper class to manage audio state thread-safely
 class OscillatorState {
     struct NoteState {
         let frequency: Float
@@ -151,5 +143,3 @@ class OscillatorState {
         lock.unlock()
     }
 }
-
-

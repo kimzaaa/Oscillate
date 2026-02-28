@@ -23,3 +23,4 @@ class OutputNode: SynthNode {
     }
 }
 // Removed OutputButton struct as it's no longer needed for interaction
+

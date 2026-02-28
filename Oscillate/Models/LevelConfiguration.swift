@@ -26,10 +26,10 @@ struct LevelConfiguration {
     
     /// Text to show when the hint button is pressed
     let hintText: String?
-
+    
     /// Optional audio file (without extension) to play from the hint popup. nil = no audio button.
     let hintAudioFilename: String? = nil
-
+    
     /// Audio file to play on start (e.g. "intro_dialogue.mp3")
     let playDialogueOnStart: String?
     
@@ -69,3 +69,4 @@ struct LevelConfiguration {
     /// Check if user has played at least one note on the keyboard
     let requireNoteInput: Bool
 }
+

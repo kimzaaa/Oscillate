@@ -44,7 +44,7 @@ struct ResonanceNodeView: View {
                     Text("\(Int(freq)) Hz").font(.system(size: 8))
                 }
                 Slider(value: $freq, in: 20...15000)
-                    .accentColor(node.color)
+                    .accentColor(.green)
                     .onChange(of: freq) { node.filter.frequency = Float(freq) }
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -54,7 +54,7 @@ struct ResonanceNodeView: View {
                     Text("\(Int(gain)) dB").font(.system(size: 8))
                 }
                 Slider(value: $gain, in: 0...24)
-                    .accentColor(node.color)
+                    .accentColor(.green)
                     .onChange(of: gain) { node.filter.gain = Float(gain) }
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -64,14 +64,11 @@ struct ResonanceNodeView: View {
                     Text(String(format: "%.2f oct", width)).font(.system(size: 8))
                 }
                 Slider(value: $width, in: 0.05...2.0)
-                    .accentColor(node.color)
+                    .accentColor(.green)
                     .onChange(of: width) { node.filter.bandwidth = Float(width) }
             }
         }
         .padding(12)
         .frame(width: 150, height: 160)
-        .background(Color.black.opacity(0.85))
-        .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(node.color.opacity(0.5), lineWidth: 2))
     }
 }

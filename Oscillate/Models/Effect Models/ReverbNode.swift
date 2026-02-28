@@ -55,6 +55,7 @@ class ReverbNode: SynthNode {
                 }
                 .labelsHidden()
                 .pickerStyle(MenuPickerStyle())
+                .accentColor(.white)
                 .frame(height: 30)
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(5)

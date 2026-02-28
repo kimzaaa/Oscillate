@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct SandboxMain: View {
-    // Sandbox has everything enabled
+    @State private var navigateToMain = false
+    
     let config = LevelConfiguration(
         showKeyboard: true,
-        showMidi: true, // Show MIDI controls with file picker
-        midiFilename: nil, // Allow user to pick file
-        midiPlaybackSpeed: nil, // Allow user to change speed with slider
+        showMidi: true,
+        midiFilename: "RESONANCE",
+        midiPlaybackSpeed: 1,
         availableNodes: ["Oscillator", "ADSR", "Reverb", "Resonance", "Filter", "Pitch"],
         initialNodes: [],
         hintText: nil,
@@ -21,7 +22,22 @@ struct SandboxMain: View {
     )
     
     var body: some View {
-        SynthLevelView(config: config)
+        if navigateToMain {
+            Main()
+        } else {
+            SynthLevelView(config: config)
+                .navigationBarBackButtonHidden(true)
+                .overlay(alignment: .topLeading) {
+                    Button(action: {
+                        navigateToMain = true
+                    }) {
+                        Text("<")
+                            .font(.system(size: 24, weight: .light))
+                            .foregroundColor(.white)
+                            .padding(.leading, 20)
+                            .padding(.top, 10)
+                    }
+                }
+        }
     }
 }
-

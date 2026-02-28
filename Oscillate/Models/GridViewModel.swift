@@ -109,13 +109,13 @@ class GridViewModel: ObservableObject {
             }
         }
     }
-
+    
     func updateNodePosition(id: UUID, newPosition: CGPoint) {
         if let index = nodes.firstIndex(where: { $0.id == id }) {
             nodes[index].position = newPosition
         }
     }
-        
+    
     func startWireDrag(from nodeID: UUID, at location: CGPoint) {
         draggingSourceID = nodeID
         draggingWireStart = location
@@ -160,22 +160,22 @@ class GridViewModel: ObservableObject {
         
         engine.connect(avSource, to: avDest, format: format)
     }
-
+    
     private func playConnectionSFX() {
         if connectionSFXPlayer == nil {
             let resourceName = "wire_connect"
             let supportedExtensions = ["wav", "m4a", "mp3", "caf", "aiff"]
-
+            
             guard let url = supportedExtensions
                 .compactMap({ Bundle.main.url(forResource: resourceName, withExtension: $0) })
                 .first else {
                 return
             }
-
+            
             connectionSFXPlayer = try? AVAudioPlayer(contentsOf: url)
             connectionSFXPlayer?.prepareToPlay()
         }
-
+        
         connectionSFXPlayer?.currentTime = 0
         connectionSFXPlayer?.play()
     }
@@ -211,3 +211,4 @@ class GridViewModel: ObservableObject {
         draggingSourceID = nil
     }
 }
+

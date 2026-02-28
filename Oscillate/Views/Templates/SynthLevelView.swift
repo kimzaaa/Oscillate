@@ -282,7 +282,6 @@ struct SynthLevelView: View {
             // UI Overlay Layer
             GeometryReader { geometry in
                 ZStack(alignment: .topTrailing) {
-                    
                     // Hint Button (Top Right)
                     if config.hintText != nil {
                         Button(action: {
@@ -324,7 +323,7 @@ struct SynthLevelView: View {
                             viewModel: viewModel, 
                             availableNodes: config.availableNodes
                         )
-                        .frame(width: 80) // Adjust width as needed for vertical toolbar or keeps horizontal?
+                        .frame(width: 120) // Adjust width as needed for vertical toolbar or keeps horizontal?
                         // Assuming NodeToolbar is vertical? Looking at context it's likely a list or vertical stack based on previous context.
                         // Wait, previous context had `.frame(width: 160)` and was in a VStack.
                         // Assuming NodeToolbar handles its orientation or is designed vertically.
@@ -411,7 +410,7 @@ struct SynthLevelView: View {
                                         }
                                     }
                                 }
-
+                                
                                 if showSuccessOverlay && config.requireNoteInput && !showFinalOverlay {
                                     Button(action: {
                                         withAnimation {
@@ -603,24 +602,49 @@ struct SynthLevelView: View {
     func destinationView(for name: String) -> some View {
         if name == "Level1_1" {
             Level1_1Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level1_2" {
             Level1_2Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level1_3"{
             Level1_3Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level2"{
             Level2Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level2_1"{
             Level2_1Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level2_2"{
             Level2_2Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level2_3" {
             Level2_3Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level3_1"{
             Level3_1Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level3_2" {
             Level3_2Main()
+                .navigationBarBackButtonHidden(true)
         } else if name == "Level4_1" {
             Level4_1Main()
+                .navigationBarBackButtonHidden(true)
+        } else if name == "Level4_2" {
+            Level4_2Main()
+                .navigationBarBackButtonHidden(true)
+        } else if name == "Level5_1" {
+            Level5_1Main()
+                .navigationBarBackButtonHidden(true)
+        } else if name == "Level5_2" {
+            Level5_2Main()
+                .navigationBarBackButtonHidden(true)
+        } else if name == "Level5_3" {
+            Level5_3Main()
+                .navigationBarBackButtonHidden(true)
+        } else if name == "Sandbox"{
+            SandboxMain()
+                .navigationBarBackButtonHidden(true)
         }
         else {
             EmptyView()

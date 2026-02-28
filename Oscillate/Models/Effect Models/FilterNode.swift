@@ -142,7 +142,7 @@ class FilterNode: SynthNode {
         )
         
         return AnyView(
-            VStack(spacing: 8) { // Tighter spacing
+            VStack(spacing: 4) { // Tighter spacing
                 // Filter Curve Visualization
                 FilterCurveView(filterType: filterType, cutoff: Double(cutoffFrequency), resonance: Double(resonance))
                     .frame(height: 50) // Reduced height
@@ -171,10 +171,10 @@ class FilterNode: SynthNode {
                         Spacer()
                         Text("\(Int(cutoffFrequency)) Hz")
                             .font(.system(size: 8))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.white)
                     }
                     Slider(value: cutoffBinding, in: 20...20000)
-                        .tint(.red)
+                        .tint(.purple)
                         .scaleEffect(0.8, anchor: .center) // Smaller slider
                         .padding(.vertical, -4) // Reduce slider padding
                 }
@@ -188,10 +188,10 @@ class FilterNode: SynthNode {
                         Spacer()
                         Text(String(format: "%.1f", resonance))
                             .font(.system(size: 8))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.white)
                     }
                     Slider(value: resBinding, in: 0...10)
-                        .tint(.red)
+                        .tint(.purple)
                         .scaleEffect(0.8, anchor: .center)
                         .padding(.vertical, -4)
                 }
@@ -200,13 +200,13 @@ class FilterNode: SynthNode {
                 HStack(spacing: 8) {
                     Toggle("Auto", isOn: autoBinding)
                         .labelsHidden()
-                        .toggleStyle(SwitchToggleStyle(tint: .red))
+                        .toggleStyle(SwitchToggleStyle(tint: .purple))
                         .scaleEffect(0.6)
                         .frame(width: 30)
                     
                     Text("AUTO")
                         .font(.system(size: 7, weight: .bold))
-                        .foregroundColor(isAuto ? .white : .gray)
+                        .foregroundColor(isAuto ? .white : .white)
                     
                     Spacer()
                     
@@ -214,7 +214,7 @@ class FilterNode: SynthNode {
                         VStack(spacing: 0) {
                             Text("SPD")
                                 .font(.system(size: 6))
-                                .foregroundColor(.gray)
+                                .foregroundColor(.white)
                             Slider(value: speedBinding, in: 0...1)
                                 .tint(.green)
                                 .scaleEffect(0.7)
@@ -224,8 +224,8 @@ class FilterNode: SynthNode {
                 }
                 .padding(.top, 4)
             }
-            .padding(10)
-            .frame(width: 170) // Overall width constraint
+                .padding(10)
+                .frame(width: 170) // Overall width constraint
         )
     }
 }
@@ -281,7 +281,7 @@ struct FilterCurveView: View {
                     path.addLine(to: CGPoint(x: cutoffX, y: height * 0.3))
                 }
                 path.addLine(to: CGPoint(x: width, y: height * 0.3))
-
+                
             case .bandPass:
                 path.move(to: CGPoint(x: 0, y: height))
                 let peakHeight = height * 0.2
@@ -308,4 +308,5 @@ struct FilterCurveView: View {
         }
     }
 }
+
 
