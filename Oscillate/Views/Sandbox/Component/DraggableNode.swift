@@ -14,8 +14,22 @@ struct DraggableNode: View {
     
     var body: some View {
         NodeView(node: node)
-            .overlay(wireDragOverlay, alignment: .trailing)
-            .overlay(inputIndicator, alignment: .leading)
+            .overlay(
+                Group {
+                    if allowOutputWire(node) {
+                        wireDragOverlay
+                    }
+                }, 
+                alignment: .trailing
+            )
+            .overlay(
+                Group {
+                    if allowInputWire(node) {
+                        inputIndicator
+                    }
+                }, 
+                alignment: .leading
+            )
             .offset(dragOffset)
             .position(node.position)
             .onTapGesture(count: 2) {
@@ -66,5 +80,13 @@ struct DraggableNode: View {
             .fill(Color.yellow)
             .frame(width: 15, height: 15)
             .offset(x: -8, y: 0)
+    }
+    
+    private func allowOutputWire(_ node: SynthNode) -> Bool {
+        return !(node is OutputNode)
+    }
+
+    private func allowInputWire(_ node: SynthNode) -> Bool {
+        return !(node is OscillatorNode)
     }
 }
