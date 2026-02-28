@@ -4,207 +4,274 @@ import AVKit
 
 class DialogueController: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var isPlaying = false
-    private var avPlayer: AVAudioPlayer?
+    private var player: AVAudioPlayer?
     
-    func tryFindAudio(named name: String) -> URL? {
-        // Quick check common paths
-        let paths = ["Resources/Lv1", "Resources"]
-        for p in paths {
-            if let u = Bundle.main.url(forResource:name, withExtension:"mp3", subdirectory:p) {
-                return u
-            }
+    static func resolveAudioURL(filename: String) -> URL? {
+        var fileURL: URL?
+        
+        if let url = Bundle.main.url(forResource: filename, withExtension: "mp3") {
+            fileURL = url
         }
-        return Bundle.main.url(forResource:name, withExtension:"mp3")
-    }
-    
-    func play(filename fn: String) {
-        guard let u = tryFindAudio(named: fn) else { return }
-        
-        do {
-            avPlayer = try AVAudioPlayer(contentsOf: u)
-            avPlayer?.delegate = self
-            avPlayer?.prepareToPlay()
-            avPlayer?.play()
-            isPlaying = true
-        } catch {}
-    }
-    
-    func stop() {
-        avPlayer?.stop()
-        isPlaying = false
-    }
-    
-    func audioPlayerDidFinishPlaying(_ p: AVAudioPlayer, successfully flag: Bool) {
-        DispatchQueue.main.async { self.isPlaying = false }
-    }
-}
-
-struct LoopingVideo: View {
-    let fileName: String
-    let w: CGFloat
-    let h: CGFloat
-    
-    @State private var qPlayer: AVQueuePlayer?
-    @State private var looper: AVPlayerLooper?
-    
-    var body: some View {
-        Group {
-            if let p = qPlayer {
-                VideoPlayer(player: p)
-                    .frame(width: w, height: h)
-                    .onAppear { p.play() }
-                    .onDisappear { p.pause() }
-            } else {
-                Rectangle()
-                    .fill(Color.black)
-                    .frame(width: w, height: h)
-                    .overlay(ProgressView())
-            }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Lv1") {
+            fileURL = url
         }
-        .onAppear { initVideo() }
-    }
-    
-    private func initVideo() {
-        if qPlayer != nil { return }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources/Lv1") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "Resources") {
+            fileURL = url
+        }
+        else if let url = Bundle.main.url(forResource: filename, withExtension: "mp3", subdirectory: "resources/lv") {
+            fileURL = url
+        }
         
-        var u: URL?
-        
-        if let url = URL(string: fileName), url.scheme?.hasPrefix("http") == true {
-             u = url
-        } else {
-            let paths = ["Lv1", "Resources/Lv1", "Resources"]
-            u = Bundle.main.url(forResource:fileName, withExtension:"mp4")
-            if u == nil {
-                for p in paths {
-                    if let found = Bundle.main.url(forResource:fileName, withExtension:"mp4", subdirectory:p) {
-                        u = found
+        if fileURL == nil {
+            if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
+                for case let fileURLCandidate as URL in enumerator {
+                    if fileURLCandidate.lastPathComponent.lowercased() == "\(filename.lowercased()).mp3" {
+                        fileURL = fileURLCandidate
                         break
                     }
                 }
             }
         }
         
-        guard let finalURL = u else { return }
+        return fileURL
+    }
+    
+    func play(filename: String) {
         
-        let item = AVPlayerItem(url: finalURL)
-        let p = AVQueuePlayer(playerItem: item)
-        self.looper = AVPlayerLooper(player: p, templateItem: item)
-        self.qPlayer = p
-        p.play()
+        
+        if let resources = Bundle.main.urls(forResourcesWithExtension: "mp3", subdirectory: nil) {
+            print("--- Resources Found ---")
+            for res in resources {
+                print("Found MP3: \(res.lastPathComponent) at \(res.relativePath)")
+            }
+            print("--- End Resources ---")
+        } else {
+            print("--- No MP3s found in Bundle ---")
+        }
+        
+        print("--- Finding audio file: \(filename) ---")
+        
+        let fileURL = Self.resolveAudioURL(filename: filename)
+        
+        guard let url = fileURL else {
+            print("Could not find audio file: \(filename)")
+            return
+        }
+        
+        do {
+            player = try AVAudioPlayer(contentsOf: url)
+            player?.delegate = self
+            player?.prepareToPlay()
+            player?.play()
+            isPlaying = true
+        } catch {
+            print("Error playing audio: \(error.localizedDescription)")
+        }
+    }
+    
+    func stop() {
+        player?.stop()
+        isPlaying = false
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        DispatchQueue.main.async {
+            self.isPlaying = false
+        }
+    }
+}
+
+struct LoopingVideo: View {
+    let fileName: String
+    let width: CGFloat
+    let height: CGFloat
+    
+    @State private var queuePlayer: AVQueuePlayer?
+    @State private var playerLooper: AVPlayerLooper?
+    
+    var body: some View {
+        Group {
+            if let p = queuePlayer {
+                VideoPlayer(player: p)
+                    .frame(width: width, height: height)
+                    .onAppear { p.play() }
+                    .onDisappear { p.pause() }
+            } else {
+                Rectangle()
+                    .fill(Color.black)
+                    .frame(width: width, height: height)
+                    .overlay(ProgressView())
+            }
+        }
+        .onAppear { setupPlayer() }
+    }
+    
+    private func setupPlayer() {
+        if queuePlayer != nil { return }
+        
+        var fileURL: URL?
+        
+        
+        if let url = URL(string: fileName), url.scheme == "http" || url.scheme == "https" {
+            fileURL = url
+        } else {
+            
+            if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4") {
+                fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Lv1") {
+                fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources/Lv1") {
+                fileURL = url
+            }
+            else if let url = Bundle.main.url(forResource: fileName, withExtension: "mp4", subdirectory: "Resources") {
+                fileURL = url
+            }
+            else {
+                
+                if let enumerator = FileManager.default.enumerator(at: Bundle.main.bundleURL, includingPropertiesForKeys: nil) {
+                    for case let file as URL in enumerator {
+                        if file.lastPathComponent.lowercased() == "\(fileName.lowercased()).mp4" {
+                            fileURL = file
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        
+        guard let url = fileURL else {
+            print("Could not find video file: \(fileName)")
+            return
+        }
+        
+        let item = AVPlayerItem(url: url)
+        let player = AVQueuePlayer(playerItem: item)
+        self.playerLooper = AVPlayerLooper(player: player, templateItem: item)
+        self.queuePlayer = player
+        player.play()
     }
 }
 
 struct SynthLevelView: View {
     let config: LevelConfig
     
-    @StateObject var vm = GridViewModel()
-    @StateObject var seq = MidiSequencer()
-    @StateObject private var dialogue = DialogueController()
+    @StateObject var viewModel = GridViewModel()
+    @StateObject var sequencer = MidiSequencer()
+    @StateObject private var dialogueController = DialogueController()
     
-    @State private var showPicker = false
-    @State private var showHint = false
-    @State private var hintPlayer: AVAudioPlayer?
+    @State private var showFilePicker = false
+    @State private var showHintAlert = false
+    @State private var hintAudioPlayer: AVAudioPlayer?
     
-    @State private var mNode: UUID? = nil
-    @State private var mOffset: CGSize = .zero
+    @State private var movingNodeID: UUID? = nil
+    @State private var movingOffset: CGSize = .zero
     
-    @State private var pan: CGSize = .zero
-    @State private var zoom: CGFloat = 1.0
-    @GestureState private var mag: CGFloat = 1.0
-    @GestureState private var drag: CGSize = .zero
+    @State private var canvasOffset: CGSize = .zero
+    @State private var zoomScale: CGFloat = 1.0
+    @GestureState private var magnifyBy: CGFloat = 1.0
+    @GestureState private var dragOffset: CGSize = .zero
     
-    @State private var done = false
-    @State private var success = false
-    @State private var noteHit = false
-    @State private var showFinal = false 
     
-    let tmr = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    @State private var isLevelComplete = false
+    @State private var showSuccessOverlay = false
+    @State private var hasPlayedNote = false
+    @State private var showFinalOverlay = false 
+    
+    
+    let checkTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
     
     var body: some View {
         ZStack {
             
             Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
             
+            
             GridBackground(
                 gridSize: 50, 
-                pan: CGSize(width: pan.width+drag.width, height: pan.height+drag.height),
-                zoom: zoom*mag
+                pan: CGSize(width: canvasOffset.width + dragOffset.width, height: canvasOffset.height + dragOffset.height),
+                zoom: zoomScale * magnifyBy
             )
             .edgesIgnoringSafeArea(.all)
             
-            GeometryReader { geo in
+            GeometryReader { geometry in
                 ZStack {
                     WireLayer(
-                        viewModel: vm,
-                        movingNodeID: mNode,
-                        movingOffset: mOffset
+                        viewModel: viewModel,
+                        movingNodeID: movingNodeID,
+                        movingOffset: movingOffset
                     )
                     
-                    ForEach(vm.nodes) { n in
+                    ForEach(viewModel.nodes) { node in
                         DraggableNode(
-                            node: n,
-                            onDragChange: { off in
-                                mNode = n.id
-                                mOffset = off
+                            node: node,
+                            onDragChange: { offset in
+                                movingNodeID = node.id
+                                movingOffset = offset
                             },
-                            onMoveEnd: { loc in
-                                vm.updateNodePosition(id: n.id, newPosition: loc)
-                                mNode = nil
-                                mOffset = .zero
+                            onMoveEnd: { finalLocation in
+                                viewModel.updateNodePosition(id: node.id, newPosition: finalLocation)
+                                movingNodeID = nil
+                                movingOffset = .zero
                             },
-                            onStartWire: { loc in
-                                vm.startWireDrag(from: n.id, at: loc)
+                            onStartWire: { location in
+                                viewModel.startWireDrag(from: node.id, at: location)
                             },
-                            onUpdateWire: { loc in
-                                vm.updateWireDrag(to: loc)
+                            onUpdateWire: { location in
+                                viewModel.updateWireDrag(to: location)
                             },
                             onEndWire: {
-                                vm.endWireDrag()
+                                viewModel.endWireDrag()
                             },
                             onRemove: {
-                                vm.removeNode(n.id)
+                                viewModel.removeNode(node.id)
                             }
                         )
                     }
                 }
                 .coordinateSpace(name: "CanvasSpace")
-                .scaleEffect(zoom * mag)
-                .offset(x: pan.width + drag.width, y: pan.height + drag.height)
-                .frame(width: geo.size.width, height: geo.size.height)
+                .scaleEffect(zoomScale * magnifyBy)
+                .offset(x: canvasOffset.width + dragOffset.width, y: canvasOffset.height + dragOffset.height)
+                .frame(width: geometry.size.width, height: geometry.size.height)
                 .contentShape(Rectangle()) 
                 .gesture(
                     DragGesture(minimumDistance: 10)
-                        .updating($drag) { val, s, _ in
-                            s = val.translation
+                        .updating($dragOffset) { value, state, _ in
+                            state = value.translation
                         }
-                        .onEnded { val in
-                            pan.width += val.translation.width
-                            pan.height += val.translation.height
+                        .onEnded { value in
+                            canvasOffset.width += value.translation.width
+                            canvasOffset.height += value.translation.height
                         }
                 )
                 .simultaneousGesture(
                     MagnificationGesture()
-                        .updating($mag) { s, g, _ in
-                            g = s
+                        .updating($magnifyBy) { currentState, gestureState, _ in
+                            gestureState = currentState
                         }
-                        .onEnded { val in
-                            zoom *= val
+                        .onEnded { value in
+                            zoomScale *= value
                         }
                 )
             }
             
+            
             if config.showKeyboard {
-                GeometryReader { geo in
+                GeometryReader { geometry in
                     VStack {
                         Spacer()
                         
                         KeyboardView(onNoteOn: { freq in
-                            vm.noteOn(frequency:freq)
-                            noteHit = true 
+                            viewModel.noteOn(frequency: freq)
+                            hasPlayedNote = true 
                         }, onNoteOff: { freq in
-                            vm.noteOff(frequency:freq)
+                            viewModel.noteOff(frequency: freq)
                         })
-                        .frame(height: geo.size.height*0.2)
+                        .frame(height: geometry.size.height * 0.2)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
                     }
@@ -212,12 +279,13 @@ struct SynthLevelView: View {
                 }
             }
             
-            GeometryReader {geo in
-                ZStack(alignment:.topTrailing) {
+            
+            GeometryReader { geometry in
+                ZStack(alignment: .topTrailing) {
                     
                     if config.hintText != nil {
                         Button(action: {
-                            showHint = true
+                            showHintAlert = true
                         }) {
                             Image(systemName: "info.circle")
                                 .font(.title)
@@ -228,13 +296,13 @@ struct SynthLevelView: View {
                                 .shadow(radius: 5)
                         }
                         .padding([.top, .trailing], 20)
-                        .alert(isPresented: $showHint) {
-                            if let hAudio = config.hintAudioFilename {
+                        .alert(isPresented: $showHintAlert) {
+                            if let hintAudio = config.hintAudioFilename {
                                 return Alert(
                                     title: Text("Hint"),
                                     message: Text(config.hintText ?? ""),
                                     primaryButton: .default(Text("Play Audio")) {
-                                        playHint(file: hAudio)
+                                        playHintAudio(filename: hintAudio)
                                     },
                                     secondaryButton: .default(Text("OK"))
                                 )
@@ -248,18 +316,28 @@ struct SynthLevelView: View {
                         }
                     }
                     
+                    
                     VStack {
                         Spacer()
                         NodeToolbar(
-                            viewModel: vm, 
+                            viewModel: viewModel, 
                             availableNodes: config.availableNodes
                         )
                         .frame(width: 120) 
+                        
+                        
+                        
+                        
                         
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 20)
+                    
+                    
+                    
+                    
+                    
                     
                     if config.showMidi {
                         HStack {
@@ -268,11 +346,11 @@ struct SynthLevelView: View {
                                 if let _ = config.midiFilename {
                                     
                                     Button(action: {
-                                        seq.togglePlay()
+                                        sequencer.togglePlay()
                                     }) {
                                         HStack {
-                                            Image(systemName: seq.isPlaying ? "stop.fill" : "play.fill")
-                                            Text(seq.isPlaying ? "Stop" : "Play MIDI")
+                                            Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
+                                            Text(sequencer.isPlaying ? "Stop" : "Play MIDI")
                                                 .font(.caption.bold())
                                         }
                                         .padding(10)
@@ -285,33 +363,34 @@ struct SynthLevelView: View {
                                     
                                     HStack {
                                         Button(action: {
-                                            if seq.currentFile == nil {
-                                                showPicker = true
+                                            if sequencer.currentFile == nil {
+                                                showFilePicker = true
                                             } else {
-                                                seq.togglePlay()
+                                                sequencer.togglePlay()
                                             }
                                         }) {
                                             HStack {
-                                                Image(systemName: seq.isPlaying ? "stop.fill" : "play.fill")
-                                                Text(seq.currentFile == nil ? "Load MIDI" : (seq.isPlaying ? "Stop" : "Play MIDI"))
+                                                Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
+                                                Text(sequencer.currentFile == nil ? "Load MIDI" : (sequencer.isPlaying ? "Stop" : "Play MIDI"))
                                                     .font(.caption.bold())
                                             }
                                             .padding(10)
                                             .background(
-                                                (seq.currentFile == nil && config.midiFilename == nil) ? Color.gray : Color.blue.opacity(0.8)
+                                                (sequencer.currentFile == nil && config.midiFilename == nil) ? Color.gray : Color.blue.opacity(0.8)
                                             )
                                             .foregroundColor(.white)
                                             .cornerRadius(20)
                                             .shadow(radius: 5)
                                         }
-                                        .disabled(seq.currentFile == nil && config.midiFilename == nil && !showPicker)
+                                        .disabled(sequencer.currentFile == nil && config.midiFilename == nil && !showFilePicker)
                                         
-                                        if seq.currentFile != nil && config.midiPlaybackSpeed == nil {
+                                        
+                                        if sequencer.currentFile != nil && config.midiPlaybackSpeed == nil {
                                             VStack(spacing: 5) {
-                                                Text("Speed: \(String(format: "%.1fx", seq.playbackSpeed))")
+                                                Text("Speed: \(String(format: "%.1fx", sequencer.playbackSpeed))")
                                                     .font(.caption)
                                                     .foregroundColor(.secondary)
-                                                Slider(value: $seq.playbackSpeed, in: 0.1...3.0)
+                                                Slider(value: $sequencer.playbackSpeed, in: 0.1...3.0)
                                                     .frame(width: 100)
                                                     .tint(.blue)
                                             }
@@ -320,22 +399,22 @@ struct SynthLevelView: View {
                                             .cornerRadius(10)
                                         }
                                     }
-                                    .fileImporter(isPresented: $showPicker, allowedContentTypes: [.midi]) { res in
-                                        switch res {
-                                        case .success(let u):
-                                            if u.startAccessingSecurityScopedResource() {
-                                                seq.load(url: u)
+                                    .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.midi]) { result in
+                                        switch result {
+                                        case .success(let url):
+                                            if url.startAccessingSecurityScopedResource() {
+                                                sequencer.load(url: url)
                                             }
-                                        case .failure:
-                                            break
+                                        case .failure(let error):
+                                            print("Error picking file: \(error.localizedDescription)")
                                         }
                                     }
                                 }
                                 
-                                if success && config.requireNoteInput && !showFinal {
+                                if showSuccessOverlay && config.requireNoteInput && !showFinalOverlay {
                                     Button(action: {
                                         withAnimation {
-                                            showFinal = true
+                                            showFinalOverlay = true
                                         }
                                     }) {
                                         HStack {
@@ -359,7 +438,7 @@ struct SynthLevelView: View {
                 }
             }
             
-            if dialogue.isPlaying {
+            if dialogueController.isPlaying {
                 ZStack {
                     Color.black.opacity(0.6)
                         .edgesIgnoringSafeArea(.all)
@@ -367,8 +446,9 @@ struct SynthLevelView: View {
                     VStack {
                         Spacer()
                         
-                        if let v = config.playVideoOnStart, let s = config.videoSize {
-                            LoopingVideo(fileName: v, w: s.width, h: s.height)
+                        
+                        if let videoFile = config.playVideoOnStart, let size = config.videoSize {
+                            LoopingVideo(fileName: videoFile, width: size.width, height: size.height)
                                 .shadow(radius: 10)
                         } else {
                             Rectangle()
@@ -382,7 +462,7 @@ struct SynthLevelView: View {
                         
                         Button(action: {
                             withAnimation {
-                                dialogue.stop()
+                                dialogueController.stop()
                             }
                         }) {
                             Text("Skip Dialogue")
@@ -398,8 +478,9 @@ struct SynthLevelView: View {
                 .transition(.opacity)
             }
             
-            if success {
-                if config.requireNoteInput && !showFinal {
+            
+            if showSuccessOverlay {
+                if config.requireNoteInput && !showFinalOverlay {
                     
                     if !config.showMidi {
                         VStack {
@@ -408,7 +489,7 @@ struct SynthLevelView: View {
                                 
                                 Button(action: {
                                     withAnimation {
-                                        showFinal = true 
+                                        showFinalOverlay = true 
                                     }
                                 }) {
                                     HStack {
@@ -448,8 +529,9 @@ struct SynthLevelView: View {
                                 .cornerRadius(10)
                         }
                         
-                        if let next = config.nextLevelViewName {
-                            NavigationLink(destination: destinationView(for: next)) {
+                        
+                        if let nextLevel = config.nextLevelViewName {
+                            NavigationLink(destination: destinationView(for: nextLevel)) {
                                 Text("Continue")
                                     .font(.headline)
                                     .foregroundColor(.white)
@@ -468,43 +550,52 @@ struct SynthLevelView: View {
                 }
             }
         }
-        .onReceive(tmr) { _ in
-            attemptGoals()
+        .onReceive(checkTimer) { _ in
+            checkGoals()
         }
         .onAppear {
-            vm.setupLevel(config: config)
+            viewModel.setupLevel(config: config)
             
-            seq.onNoteOn = { freq in
-                vm.noteOn(frequency: freq)
+            
+            sequencer.onNoteOn = { freq in
+                viewModel.noteOn(frequency: freq)
             }
-            seq.onNoteOff = { freq in
-                vm.noteOff(frequency: freq)
+            sequencer.onNoteOff = { freq in
+                viewModel.noteOff(frequency: freq)
             }
             
-            if let fn = config.midiFilename {
-                if let u = Bundle.main.url(forResource: fn, withExtension: "mid") ?? Bundle.main.url(forResource: fn, withExtension: "midi") {
-                    seq.load(url: u)
+            if let filename = config.midiFilename {
+                if let url = Bundle.main.url(forResource: filename, withExtension: "mid") ?? Bundle.main.url(forResource: filename, withExtension: "midi") {
+                    sequencer.load(url: url)
+                } else {
+                    print("Could not find MIDI file: \(filename)")
                 }
             }
             
-            if let s = config.midiPlaybackSpeed {
-                seq.playbackSpeed = s
+            if let speed = config.midiPlaybackSpeed {
+                sequencer.playbackSpeed = speed
             }
             
-            if let dFile = config.playDialogueOnStart {
-                dialogue.play(filename: dFile)
+            if let dialogueFile = config.playDialogueOnStart {
+                dialogueController.play(filename: dialogueFile)
             }
         }
     }
     
-    func playHint(file: String) {
-        guard let u = DialogueController().tryFindAudio(named: file) else { return }
+    
+    func playHintAudio(filename: String) {
+        guard let url = DialogueController.resolveAudioURL(filename: filename) else {
+            print("Could not find hint audio file: \(filename)")
+            return
+        }
         
         do {
-            hintPlayer = try AVAudioPlayer(contentsOf: u)
-            hintPlayer?.prepareToPlay()
-            hintPlayer?.play()
-        } catch {}
+            hintAudioPlayer = try AVAudioPlayer(contentsOf: url)
+            hintAudioPlayer?.prepareToPlay()
+            hintAudioPlayer?.play()
+        } catch {
+            print("Error playing hint audio: \(error.localizedDescription)")
+        }
     }
     
     @ViewBuilder
@@ -560,122 +651,132 @@ struct SynthLevelView: View {
         }
     }
     
+    
     func checkGoals() {
         guard !isLevelComplete else { return }
+        
         
         if config.requiredConnections.isEmpty && config.requiredSettings.isEmpty {
             return
         }
         
-        iattemptGoals() {
-        guard !done else { return }
         
-        // quick check requirements
-        let needsConn = !config.requiredConnections.isEmpty
-        let needsSet = !config.requiredSettings.isEmpty
+        if config.requireNoteInput && !hasPlayedNote {
+            return
+        }
         
-        if !needsConn && !needsSet { return }
-        if config.requireNoteInput && !noteHit { return }
+        var availableWires = viewModel.wires
         
-        if needsConn && !checkConnections() { return }
-        if needsSet && !checkSettings() { return }
-        
-        completeLevel()
-    }
-    
-    func checkConnections() -> Bool {
-        var wires = vm.wires
-        for g in config.requiredConnections {
-            if let idx = wires.firstIndex(where: {
-                matchWire($0, req: g)
+        for goal in config.requiredConnections {
+            if let index = availableWires.firstIndex(where: { wire in
+                let startNode = viewModel.nodes.first(where: { $0.id == wire.startNodeID })
+                let endNode = viewModel.nodes.first(where: { $0.id == wire.endNodeID })
+                
+                guard let s = startNode, let e = endNode else { return false }
+                
+                var sType = String(describing: type(of: s)).replacingOccurrences(of: "Node", with: "")
+                var eType = String(describing: type(of: e)).replacingOccurrences(of: "Node", with: "")
+                
+                if sType == "PitchPan" { sType = "Pitch" }
+                if eType == "PitchPan" { eType = "Pitch" }
+                
+                return sType == goal.fromType && eType == goal.toType
             }) {
-                wires.remove(at: idx)
+                availableWires.remove(at: index)
             } else {
-                return false
+                return
             }
         }
-        return true
-    }
-    
-    func matchWire(_ w: Wire, req: LevelConnectionGoal) -> Bool {
-        guard let s = vm.nodes.first(where: { $0.id == w.startNodeID }),
-              let e = vm.nodes.first(where: { $0.id == w.endNodeID }) else { return false }
         
-        let sT = cleanType(s)
-        let eT = cleanType(e)
-        
-        return sT == req.fromType && eT == req.toType
-    }
-    
-    func cleanType(_ n: SynthNode) -> String {
-        var t = String(describing: type(of: n)).replacingOccurrences(of: "Node", with: "")
-        if t == "PitchPan" { return "Pitch" }
-        return t
-    }
-    
-    func checkSettings() -> Bool {
-        for g in config.requiredSettings {
-            let candidates = vm.nodes.filter { cleanType($0) == g.nodeType }
-            let ok = candidates.contains { n in
-                checkNode(n, key: g.settingName, target: g.targetValue, tol: g.tolerance)
+        for goal in config.requiredSettings {
+            let nodes = viewModel.nodes.filter { node in
+                var typeName = String(describing: type(of: node)).replacingOccurrences(of: "Node", with: "")
+                if typeName == "PitchPan" { typeName = "Pitch" }
+                return typeName == goal.nodeType
             }
-            if !ok { return false }
+            
+            let matchFound = nodes.contains { node in
+                checkSetting(node: node, setting: goal.settingName, target: goal.targetValue, tolerance: goal.tolerance)
+            }
+            
+            if !matchFound {
+                return
+            }
         }
-        return true
-    }
-    
-    func completeLevel() {
+        
         withAnimation {
-            done = true
-            success = true
+            isLevelComplete = true
+            showSuccessOverlay = true
         }
     }
     
-    func checkNode(_ n: SynthNode, key: String, target: Double, tol: Double?) -> Bool {
-        if let osc = n as? OscillatorNode {
-            if key == "waveform" {
-                let v: Double
-                switch osc.waveform {
-                case .sine: v = 0.0
-                case .square: v = 1.0
-                case .triangle: v = 2.0
-                case .saw: v = 3.0
+    func checkSetting(node: SynthNode, setting: String, target: Double, tolerance: Double?) -> Bool {
+        if let oscillator = node as? OscillatorNode {
+            if setting == "waveform" {
+                
+                
+                let current: Double
+                switch oscillator.waveform {
+                case .sine: current = 0.0
+                case .square: current = 1.0
+                case .triangle: current = 2.0
+                case .saw: current = 3.0
                 }
-                return v == target
+                
+                return current == target
             }
-            if key == "volume" {
-                let v = Double(osc.volume)
-                if let t = tol { return abs(v-target) <= t }
-                return v == target
-            }
-        }
-        
-        if let f = n as? FilterNode {
-            if key == "cutoffFrequency" {
-                let v = Double(f.cutoffFrequency)
-                if let t = tol { return abs(v-target) <= t }
-                return v == target
+            if setting == "volume" {
+                let vol = Double(oscillator.volume)
+                if let tol = tolerance {
+                    return abs(vol - target) <= tol
+                }
+                return vol == target
             }
         }
         
-        if let a = n as? ADSRNode {
-            var v: Double = 0
-            if key == "attack" { v = Double(a.attack) }
-            else if key == "decay" { v = Double(a.decay) }
-            else if key == "sustain" { v = Double(a.sustain) }
-            else if key == "release" { v = Double(a.release) }
-            else { return false }
+        if let filter = node as? FilterNode {
+            if setting == "cutoffFrequency" {
+                let val = Double(filter.cutoffFrequency)
+                if let tol = tolerance {
+                    return abs(val - target) <= tol
+                }
+                return val == target
+            }
+        }
+        
+        if let adsr = node as? ADSRNode {
+            let val: Double
+            switch setting {
+            case "attack": val = Double(adsr.attack)
+            case "decay": val = Double(adsr.decay)
+            case "sustain": val = Double(adsr.sustain)
+            case "release": val = Double(adsr.release)
+            default: return false
+            }
             
-            if let t = tol { return abs(v - target) <= t }
-            return v == target
+            if let tol = tolerance {
+                return abs(val - target) <= tol
+            }
+            return val == target
         }
         
-        if let p = n as? PitchPanNode {
-            var v: Double = 0
-            if key == "basePitch" { v = Double(p.basePitch) }
-            else if key == "finePitch" { v = Double(p.finePitch) }
-            else if key == "pitch" { v = Double(p.basePitch + p.finePitch) }
-            else { return false }
+        if let pitchNode = node as? PitchPanNode {
+            let val: Double
+            switch setting {
+            case "basePitch": val = Double(pitchNode.basePitch)
+            case "finePitch": val = Double(pitchNode.finePitch)
+            case "pitch": val = Double(pitchNode.basePitch + pitchNode.finePitch)
+            default: return false
+            }
             
-            if let t = tol { return abs(v - target) <= t }
-            return v
+            if let tol = tolerance {
+                return abs(val - target) <= tol
+            }
+            return val == target
+        }
+        
+        
+        
+        return true 
+    }
+}
