@@ -11,10 +11,11 @@ class MidiSequencer: ObservableObject {
     private var lastUpdateTime: TimeInterval = 0
     private var songPosition: TimeInterval = 0
     private var eventIndex: Int = 0
-    
+    private var activeNotes = Set<Float>()
+
     var onNoteOn: ((Float) -> Void)?
     var onNoteOff: ((Float) -> Void)?
-    
+
     func load(url: URL) {
         let parser = SimpleMidiParser()
         if let loadedEvents = parser.parse(url: url) {
@@ -49,7 +50,12 @@ class MidiSequencer: ObservableObject {
         isPlaying = false
         timer?.invalidate()
         timer = nil
-        // All Notes Off could be sent here if we tracked active notes
+        
+        // Turn off all currently active notes
+        for note in activeNotes {
+            onNoteOff?(note)
+        }
+        activeNotes.removeAll()
     }
     
     private func processEvents() {
@@ -71,13 +77,15 @@ class MidiSequencer: ObservableObject {
                 // Trigger event
                 // Convert MIDI note to Frequency
                 let freq = SimpleMidiParser.frequency(for: event.note)
-                
+
                 if event.type == .noteOn {
+                    activeNotes.insert(freq)
                     onNoteOn?(freq)
                 } else {
+                    activeNotes.remove(freq)
                     onNoteOff?(freq)
                 }
-                
+
                 eventIndex += 1
             } else {
                 break

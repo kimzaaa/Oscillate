@@ -87,7 +87,8 @@ struct ShowcaseCardView: View {
                 Text(card.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .lineLimit(4)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
             }
             .padding()
