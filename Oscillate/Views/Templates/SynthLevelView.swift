@@ -343,76 +343,93 @@ struct SynthLevelView: View {
                     if config.showMidi {
                         HStack {
                             Spacer()
-                            if let _ = config.midiFilename {
-                                // Hardcoded MIDI path
-                                Button(action: {
-                                    sequencer.togglePlay()
-                                }) {
-                                    HStack {
-                                        Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
-                                        Text(sequencer.isPlaying ? "Stop" : "Play MIDI")
-                                            .font(.caption.bold())
-                                    }
-                                    .padding(10)
-                                    .background(Color.blue.opacity(0.8))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(20)
-                                    .shadow(radius: 5)
-                                }
-                            } else {
-                                // Sandbox "Open File" path
-                                HStack {
+                            VStack(spacing: 10) {
+                                if let _ = config.midiFilename {
+                                    // Hardcoded MIDI path
                                     Button(action: {
-                                        if sequencer.currentFile == nil {
-                                            showFilePicker = true
-                                        } else {
-                                            sequencer.togglePlay()
-                                        }
+                                        sequencer.togglePlay()
                                     }) {
                                         HStack {
                                             Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
-                                            Text(sequencer.currentFile == nil ? "Load MIDI" : (sequencer.isPlaying ? "Stop" : "Play MIDI"))
+                                            Text(sequencer.isPlaying ? "Stop" : "Play MIDI")
                                                 .font(.caption.bold())
                                         }
                                         .padding(10)
-                                        .background(
-                                            (sequencer.currentFile == nil && config.midiFilename == nil) ? Color.gray : Color.blue.opacity(0.8)
-                                        )
+                                        .background(Color.blue.opacity(0.8))
                                         .foregroundColor(.white)
                                         .cornerRadius(20)
                                         .shadow(radius: 5)
                                     }
-                                    .disabled(sequencer.currentFile == nil && config.midiFilename == nil && !showFilePicker) 
-                                    // Wait, logic: if no file loaded, button should be "Load MIDI" (active)
-                                    // If file loaded, button is Play/Stop.
-                                    // User said "if play midi is nil, make the play midi button not active".
-                                    // This likely means if no file is ready to play, don't show Play.
-                                    // But we have "Load".
-                                    
-                                    // Only show slider if we don't have a fixed speed in config
-                                    if sequencer.currentFile != nil && config.midiPlaybackSpeed == nil {
-                                        VStack(spacing: 5) {
-                                            Text("Speed: \(String(format: "%.1fx", sequencer.playbackSpeed))")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                            Slider(value: $sequencer.playbackSpeed, in: 0.1...3.0)
-                                                .frame(width: 100)
-                                                .tint(.blue)
+                                } else {
+                                    // Sandbox "Open File" path
+                                    HStack {
+                                        Button(action: {
+                                            if sequencer.currentFile == nil {
+                                                showFilePicker = true
+                                            } else {
+                                                sequencer.togglePlay()
+                                            }
+                                        }) {
+                                            HStack {
+                                                Image(systemName: sequencer.isPlaying ? "stop.fill" : "play.fill")
+                                                Text(sequencer.currentFile == nil ? "Load MIDI" : (sequencer.isPlaying ? "Stop" : "Play MIDI"))
+                                                    .font(.caption.bold())
+                                            }
+                                            .padding(10)
+                                            .background(
+                                                (sequencer.currentFile == nil && config.midiFilename == nil) ? Color.gray : Color.blue.opacity(0.8)
+                                            )
+                                            .foregroundColor(.white)
+                                            .cornerRadius(20)
+                                            .shadow(radius: 5)
                                         }
-                                        .padding(8)
-                                        .background(Color.white.opacity(0.8))
-                                        .cornerRadius(10)
+                                        .disabled(sequencer.currentFile == nil && config.midiFilename == nil && !showFilePicker)
+                                        
+                                        // Only show slider if we don't have a fixed speed in config
+                                        if sequencer.currentFile != nil && config.midiPlaybackSpeed == nil {
+                                            VStack(spacing: 5) {
+                                                Text("Speed: \(String(format: "%.1fx", sequencer.playbackSpeed))")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                                Slider(value: $sequencer.playbackSpeed, in: 0.1...3.0)
+                                                    .frame(width: 100)
+                                                    .tint(.blue)
+                                            }
+                                            .padding(8)
+                                            .background(Color.white.opacity(0.8))
+                                            .cornerRadius(10)
+                                        }
+                                    }
+                                    .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.midi]) { result in
+                                        switch result {
+                                        case .success(let url):
+                                            if url.startAccessingSecurityScopedResource() {
+                                                sequencer.load(url: url)
+                                            }
+                                        case .failure(let error):
+                                            print("Error picking file: \(error.localizedDescription)")
+                                        }
                                     }
                                 }
-                                .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.midi]) { result in
-                                    switch result {
-                                    case .success(let url):
-                                        if url.startAccessingSecurityScopedResource() {
-                                            sequencer.load(url: url)
+
+                                if showSuccessOverlay && config.requireNoteInput && !showFinalOverlay {
+                                    Button(action: {
+                                        withAnimation {
+                                            showFinalOverlay = true
                                         }
-                                    case .failure(let error):
-                                        print("Error picking file: \(error.localizedDescription)")
+                                    }) {
+                                        HStack {
+                                            Text("Next Level")
+                                            Image(systemName: "arrow.right.circle.fill")
+                                        }
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.green)
+                                        .cornerRadius(30)
+                                        .shadow(radius: 5)
                                     }
+                                    .transition(.move(edge: .top).combined(with: .opacity))
                                 }
                             }
                             Spacer()
@@ -466,33 +483,35 @@ struct SynthLevelView: View {
             if showSuccessOverlay {
                 if config.requireNoteInput && !showFinalOverlay {
                     // Non-blocking UI for levels where you need to keep playing
-                    VStack {
-                        HStack {
-                            Spacer()
-                            // "Next Level" button that triggers the overlay
-                            Button(action: {
-                                withAnimation {
-                                    showFinalOverlay = true // Show the blocking overlay now
+                    if !config.showMidi {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                // "Next Level" button that triggers the overlay
+                                Button(action: {
+                                    withAnimation {
+                                        showFinalOverlay = true // Show the blocking overlay now
+                                    }
+                                }) {
+                                    HStack {
+                                        Text("Next Level")
+                                        Image(systemName: "arrow.right.circle.fill")
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Color.green)
+                                    .cornerRadius(30)
+                                    .shadow(radius: 5)
                                 }
-                            }) {
-                                HStack {
-                                    Text("Next Level")
-                                    Image(systemName: "arrow.right.circle.fill")
-                                }
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.green)
-                                .cornerRadius(30)
-                                .shadow(radius: 5)
+                                .padding(.top, 50)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                                Spacer()
                             }
-                            .padding(.top, 50)
-                            .transition(.move(edge: .top).combined(with: .opacity))
                             Spacer()
                         }
-                        Spacer()
+                        .edgesIgnoringSafeArea(.all)
                     }
-                    .edgesIgnoringSafeArea(.all)
                 } else {
                     // Blocking Overlay (Used for Puzzle levels OR Note-levels after button press)
                     VStack(spacing: 20) {

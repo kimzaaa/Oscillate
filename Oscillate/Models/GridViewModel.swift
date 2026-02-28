@@ -10,6 +10,7 @@ class GridViewModel: ObservableObject {
     @Published var draggingSourceID: UUID?
     
     let engine = AudioEngine.shared.engine
+    private var connectionSFXPlayer: AVAudioPlayer?
     
     init() {
         // Keeping your original "plop" for the output node
@@ -140,6 +141,7 @@ class GridViewModel: ObservableObject {
                     let newWire = Wire(startNodeID: sourceID, endNodeID: node.id)
                     wires.append(newWire)
                     connectAudio(sourceID: sourceID, destID: node.id)
+                    playConnectionSFX()
                     break
                 }
             }
@@ -157,6 +159,25 @@ class GridViewModel: ObservableObject {
         if !engine.isRunning { try? engine.start() }
         
         engine.connect(avSource, to: avDest, format: format)
+    }
+
+    private func playConnectionSFX() {
+        if connectionSFXPlayer == nil {
+            let resourceName = "wire_connect"
+            let supportedExtensions = ["wav", "m4a", "mp3", "caf", "aiff"]
+
+            guard let url = supportedExtensions
+                .compactMap({ Bundle.main.url(forResource: resourceName, withExtension: $0) })
+                .first else {
+                return
+            }
+
+            connectionSFXPlayer = try? AVAudioPlayer(contentsOf: url)
+            connectionSFXPlayer?.prepareToPlay()
+        }
+
+        connectionSFXPlayer?.currentTime = 0
+        connectionSFXPlayer?.play()
     }
     
     func removeWire(_ wire: Wire) {
