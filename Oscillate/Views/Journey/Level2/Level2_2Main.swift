@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct Level2_2Main: View {
-    // Level 1-1 configuration
-    // Example: Maybe now they need to change the waveform
-    let config = LevelConfiguration(
+    
+    let config = LevelConfig(
         showKeyboard: true,
         showMidi: false,
         midiFilename: nil,
@@ -18,25 +17,23 @@ struct Level2_2Main: View {
         playVideoOnStart: nil,
         videoSize: nil,
         requiredConnections: [
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
-            LevelConfiguration.ConnectionGoal(fromType: "ADSR", toType: "Output")
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
+            LevelConfig.ConnectionGoal(fromType: "ADSR", toType: "Output")
         ],
         requiredSettings: [],
         successMessage: "Now try making a pluck sound",
-        nextLevelViewName: "Level2_3", // Assuming new level
+        nextLevelViewName: "Level2_3", 
         requireNoteInput: true
     )
     
-    
     var body: some View {
         ZStack {
-            // 2. The Base Game Layer
+            
             SynthLevelView(config: config)
             
-            // 3. The Visualizer Overlay (Only for this level)
             VStack {
                 HStack {
-                    // Place it Top-Left
+                    
                     AudioVisualizer()
                         .frame(width: 300, height: 150)
                         .padding([.top, .leading], 20)
@@ -46,10 +43,8 @@ struct Level2_2Main: View {
                 }
                 Spacer()
             }
-            // Ensure it doesn't catch touches meant for the game below
+            
             .allowsHitTesting(false) 
         }
     }
 }
-
-

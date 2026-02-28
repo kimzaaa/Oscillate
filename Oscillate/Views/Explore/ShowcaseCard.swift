@@ -5,7 +5,7 @@ struct ShowcaseCard: Identifiable {
     let title: String
     let difficulty: Difficulty
     let description: String
-    let videoURL: String // URI string, e.g., "https://..." or a local bundle MP4 name
+    let videoURL: String 
     
     enum Difficulty: String {
         case beginner = "Beginner"

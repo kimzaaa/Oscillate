@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct NodeToolbar: View {
-    // Note: Do NOT use $viewModel when calling functions. 
-    // Use the viewModel directly.
+    
     @ObservedObject var viewModel: GridViewModel
     
-    // Default to all nodes if not specified
     var availableNodes: [String] = ["Oscillator", "ADSR", "Reverb", "Resonance", "Filter", "Pitch"]
     
     let columns = [
@@ -98,4 +96,3 @@ struct ToolbarItem: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-

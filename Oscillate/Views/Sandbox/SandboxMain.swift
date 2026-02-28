@@ -3,7 +3,7 @@ import SwiftUI
 struct SandboxMain: View {
     @State private var navigateToMain = false
     
-    let config = LevelConfiguration(
+    let config = LevelConfig(
         showKeyboard: true,
         showMidi: true,
         midiFilename: "RESONANCE",

@@ -30,12 +30,11 @@ class FilterNode: SynthNode {
         didSet { updateFilter() }
     }
     
-    // Automation
     @Published var isAuto: Bool = false
-    @Published var autoSpeed: Float = 0.5 // 0.0 (slow) to 1.0 (fast)
+    @Published var autoSpeed: Float = 0.5 
     
     private var automationTimer: Timer?
-    private var automationPhase: Double = 0.0 // 0.0 to 1.0 (phase of the sweep)
+    private var automationPhase: Double = 0.0 
     private var originalCutoff: Float = 1000.0
     
     init(position: CGPoint) {
@@ -48,32 +47,25 @@ class FilterNode: SynthNode {
         let band = eq.bands[0]
         band.filterType = filterType.avType
         band.frequency = cutoffFrequency
-        // Map resonance 0..10 -> bandwidth 5.0..0.1 octaves
+        
         let bw = max(0.1, 5.0 - (resonance / 2.0))
         band.bandwidth = bw
         band.bypass = false
     }
     
-    // Called when a key is pressed (externally triggered)
     func noteOn() {
         guard isAuto else { return }
         startAutomation()
     }
     
     func noteOff() {
-        // Optional: Stop automation or let it finish release?
-        // For "0 to 1 to 0", it sounds like a one-shot envelope. 
-        // We'll let it run its course or reset. 
-        // Typically noteOff might trigger the release phase.
+        
     }
     
     private func startAutomation() {
         automationTimer?.invalidate()
         automationPhase = 0.0
         
-        // Speed factor: 0.1s (fastest) to 2.0s (slowest)
-        // autoSpeed 1.0 -> 0.1s duration
-        // autoSpeed 0.0 -> 2.0s duration
         let duration = 2.0 - (Double(autoSpeed) * 1.9)
         let fps = 60.0
         let step = 1.0 / (duration * fps)
@@ -81,32 +73,21 @@ class FilterNode: SynthNode {
         automationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/fps, repeats: true) { [weak self] timer in
             guard let self = self else { timer.invalidate(); return }
             
-            // Phase goes 0 -> 1 -> 0
-            // We can map phase 0..1 to a sine wave 0..PI
-            
             self.automationPhase += step
             if self.automationPhase >= 1.0 {
                 self.automationPhase = 0.0 
-                // One shot? User said "0 to 1 to 0 after note pressed". 
-                // Implies a single cycle.
+                
                 timer.invalidate()
-                // Reset to low? Or keep? "to 0" implies back to start.
+                
                 self.cutoffFrequency = 20.0 
                 return
             }
             
-            // Calculate 0..1..0 curve
-            // sin(0) = 0, sin(PI/2) = 1, sin(PI) = 0
             let value = sin(self.automationPhase * Double.pi)
-            
-            // Map 0..1 to frequency range 20..20000 (Exponential feel)
-            // Linear modulation of frequency sounds weird, lets do Logarithmic
-            // Min 20, Max 20000
-            // freq = 20 * (1000)^(value) -> 20 * 1000 = 20000
             
             let minF: Double = 20.0
             let maxF: Double = 20000.0
-            // Logarithmic interpolation
+            
             let freq = minF * pow(maxF / minF, value)
             
             DispatchQueue.main.async {
@@ -142,10 +123,10 @@ class FilterNode: SynthNode {
         )
         
         return AnyView(
-            VStack(spacing: 4) { // Tighter spacing
-                // Filter Curve Visualization
+            VStack(spacing: 4) { 
+                
                 FilterCurveView(filterType: filterType, cutoff: Double(cutoffFrequency), resonance: Double(resonance))
-                    .frame(height: 50) // Reduced height
+                    .frame(height: 50) 
                     .background(Color.black.opacity(0.3))
                     .cornerRadius(8)
                     .overlay(
@@ -153,16 +134,14 @@ class FilterNode: SynthNode {
                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     )
                 
-                // TYPE PICKER
                 Picker("", selection: typeBinding) {
                     ForEach(FilterType.allCases, id: \.self) { type in
                         Text(type.rawValue).tag(type)
                     }
                 }
                 .pickerStyle(SegmentedPickerStyle())
-                .scaleEffect(0.75) // Smaller
+                .scaleEffect(0.75) 
                 
-                // CUTOFF SLIDER
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         Text("CUTOFF")
@@ -175,11 +154,10 @@ class FilterNode: SynthNode {
                     }
                     Slider(value: cutoffBinding, in: 20...20000)
                         .tint(.purple)
-                        .scaleEffect(0.8, anchor: .center) // Smaller slider
-                        .padding(.vertical, -4) // Reduce slider padding
+                        .scaleEffect(0.8, anchor: .center) 
+                        .padding(.vertical, -4) 
                 }
                 
-                // RESONANCE SLIDER
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         Text("RES")
@@ -196,7 +174,6 @@ class FilterNode: SynthNode {
                         .padding(.vertical, -4)
                 }
                 
-                // AUTOMATION
                 HStack(spacing: 8) {
                     Toggle("Auto", isOn: autoBinding)
                         .labelsHidden()
@@ -225,7 +202,7 @@ class FilterNode: SynthNode {
                 .padding(.top, 4)
             }
                 .padding(10)
-                .frame(width: 170) // Overall width constraint
+                .frame(width: 170) 
         )
     }
 }
@@ -240,7 +217,6 @@ struct FilterCurveView: View {
             let width = size.width
             let height = size.height
             
-            // Map freq 20..20000 to 0..width
             func xForFreq(_ f: Double) -> Double {
                 return (f - 20) / (20000 - 20) * width
             }
@@ -308,5 +284,3 @@ struct FilterCurveView: View {
         }
     }
 }
-
-

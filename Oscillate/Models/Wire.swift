@@ -5,4 +5,3 @@ struct Wire: Identifiable, Equatable{
     let startNodeID: UUID
     let endNodeID: UUID
 }
-

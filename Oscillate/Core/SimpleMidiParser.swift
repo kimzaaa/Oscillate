@@ -1,7 +1,7 @@
 import Foundation
 
 struct MidiEvent {
-    let timestamp: Double // in seconds
+    let timestamp: Double 
     let type: EventType
     let note: Int
     let velocity: Int
@@ -24,7 +24,6 @@ class SimpleMidiParser {
         let bytes = [UInt8](data)
         var offset = 0
         
-        // Helper to safely read bytes
         func readBytes(_ count: Int) -> [UInt8]? {
             guard offset + count <= bytes.count else { return nil }
             let r = Array(bytes[offset..<offset+count])
@@ -56,7 +55,6 @@ class SimpleMidiParser {
             return value
         }
         
-        // Header
         guard let chunkType = readBytes(4), String(bytes: chunkType, encoding: .ascii) == "MThd" else { return nil }
         _ = readUInt32()
         _ = readUInt16()
@@ -64,7 +62,7 @@ class SimpleMidiParser {
         let timeDivision = readUInt16() ?? 480
         
         let ticksPerQuarter = Double(timeDivision & 0x7FFF)
-        var tempo = 500000.0 // Default 120 BPM
+        var tempo = 500000.0 
         
         for _ in 0..<trackCount {
             guard offset < bytes.count else { break }
@@ -98,14 +96,14 @@ class SimpleMidiParser {
                 let cmd = status & 0xF0
                 
                 switch cmd {
-                case 0x80: // Note Off
+                case 0x80: 
                     guard let b = readBytes(2) else { break }
                     let note = Int(b[0])
                     let vel = Int(b[1])
                     let seconds = (Double(currentTime) * tempo) / (ticksPerQuarter * 1000000.0)
                     events.append(MidiEvent(timestamp: seconds, type: .noteOff, note: note, velocity: vel))
                     
-                case 0x90: // Note On
+                case 0x90: 
                     guard let b = readBytes(2) else { break }
                     let note = Int(b[0])
                     let vel = Int(b[1])
@@ -113,18 +111,18 @@ class SimpleMidiParser {
                     let type: MidiEvent.EventType = (vel > 0) ? .noteOn : .noteOff
                     events.append(MidiEvent(timestamp: seconds, type: type, note: note, velocity: vel))
                     
-                case 0xA0, 0xB0, 0xE0: // 2 data bytes
+                case 0xA0, 0xB0, 0xE0: 
                     _ = readBytes(2)
                     
-                case 0xC0, 0xD0: // 1 data byte
+                case 0xC0, 0xD0: 
                     _ = readBytes(1)
                     
-                case 0xF0: // System
-                    if status == 0xFF { // Meta
-                        guard let _ = readBytes(1) else { break } // type
+                case 0xF0: 
+                    if status == 0xFF { 
+                        guard let _ = readBytes(1) else { break } 
                         guard let len = readVarInt() else { break }
                         _ = readBytes(len)
-                    } else if status == 0xF0 || status == 0xF7 { // Sysex
+                    } else if status == 0xF0 || status == 0xF7 { 
                         guard let len = readVarInt() else { break }
                         _ = readBytes(len)
                     }
@@ -139,4 +137,3 @@ class SimpleMidiParser {
         return events.sorted { $0.timestamp < $1.timestamp }
     }
 }
-

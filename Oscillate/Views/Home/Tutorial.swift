@@ -71,14 +71,13 @@ struct LoopingPlayer: UIViewRepresentable {
     
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
-        let player = AVPlayer() // Initialize empty
+        let player = AVPlayer() 
         let playerLayer = AVPlayerLayer(player: player)
         
         player.isMuted = true
         playerLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(playerLayer)
         
-        // Store the player in the coordinator so updateUIView can access it
         context.coordinator.player = player
         context.coordinator.playerLayer = playerLayer
         
@@ -86,17 +85,15 @@ struct LoopingPlayer: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
-        // Update the frame
+        
         context.coordinator.playerLayer?.frame = CGRect(x: 0, y: 0, width: 1200, height: 500)
         
-        // Check if the URL has changed before reloading
         if context.coordinator.currentUri != uri {
             context.coordinator.currentUri = uri
             
             guard let url = URL(string: uri) else { return }
             let playerItem = AVPlayerItem(url: url)
             
-            // Loop the new item
             NotificationCenter.default.removeObserver(context.coordinator, name: .AVPlayerItemDidPlayToEndTime, object: nil)
             NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerItem, queue: .main) { _ in
                 context.coordinator.player?.seek(to: .zero)
@@ -118,4 +115,3 @@ struct LoopingPlayer: UIViewRepresentable {
         var currentUri: String?
     }
 }
-

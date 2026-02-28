@@ -10,7 +10,6 @@ class ADSRNode: SynthNode {
     private let mixer = AVAudioMixerNode()
     private var timer: Timer?
     
-    // Envelope State Machine
     private enum EnvelopeState {
         case idle, attack, decay, sustain, release
     }
@@ -19,25 +18,20 @@ class ADSRNode: SynthNode {
     private var stateStartTime: TimeInterval = 0
     private var releaseStartVolume: Float = 0
     
-    // Simple polyphony/paraphony tracking: 
-    // Count how many keys are pressed. Trigger on 0->1. Release on 1->0.
     private var activeKeys = 0
     
     init(position: CGPoint) {
         super.init(name: "ADSR", color: .green, icon: "waveform.path", position: position)
         self.avNode = mixer
         
-        // Ensure starting volume is 0
         self.mixer.outputVolume = 0
         
         startEnvelopeTimer()
     }
     
-    // MARK: - Note Handling
-    
     func noteOn() {
         activeKeys += 1
-        // Trigger envelope only on the first key press (paraphonic behavior)
+        
         if activeKeys == 1 {
             triggerAttack()
         }
@@ -45,7 +39,7 @@ class ADSRNode: SynthNode {
     
     func noteOff() {
         activeKeys = max(0, activeKeys - 1)
-        // Release envelope only when all keys are lifted
+        
         if activeKeys == 0 {
             triggerRelease()
         }
@@ -58,17 +52,15 @@ class ADSRNode: SynthNode {
     
     private func triggerRelease() {
         if state != .idle {
-            // Capture current volume to release from there (prevents popping)
+            
             releaseStartVolume = mixer.outputVolume
             state = .release
             stateStartTime = Date().timeIntervalSince1970
         }
     }
     
-    // MARK: - Envelope Logic
-    
     private func startEnvelopeTimer() {
-        // 60Hz update rate matches typical UI refresh and is sufficient for volume envelopes
+        
         let updateInterval: TimeInterval = 1.0 / 60.0
         
         timer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
@@ -95,7 +87,7 @@ class ADSRNode: SynthNode {
             if t < a {
                 currentVolume = t / a
             } else {
-                // Attack Complete -> Decay
+                
                 currentVolume = 1.0
                 state = .decay
                 stateStartTime = now
@@ -104,13 +96,13 @@ class ADSRNode: SynthNode {
         case .decay:
             if t < d {
                 let progress = t / d
-                // Linear decay from 1.0 to Sustain level
+                
                 currentVolume = 1.0 - (progress * (1.0 - s))
             } else {
-                // Decay Complete -> Sustain
+                
                 currentVolume = s
                 state = .sustain
-                // No need to reset timer for Sustain, it's static
+                
             }
             
         case .sustain:
@@ -119,21 +111,20 @@ class ADSRNode: SynthNode {
         case .release:
             if t < r {
                 let progress = t / r
-                // Linear release from captured volume to 0
+                
                 currentVolume = releaseStartVolume * (1.0 - progress)
             } else {
-                // Release Complete -> Idle
+                
                 currentVolume = 0.0
                 state = .idle
             }
         }
         
-        // Apply volume safely
         mixer.outputVolume = max(0.0, min(1.0, currentVolume))
     }
     
     override func content() -> AnyView {
-        // Bindings
+        
         let a = Binding(get: { self.attack }, set: { self.attack = $0 })
         let d = Binding(get: { self.decay }, set: { self.decay = $0 })
         let s = Binding(get: { self.sustain }, set: { self.sustain = $0 })
@@ -171,6 +162,3 @@ class ADSRNode: SynthNode {
         }
     }
 }
-
-
-

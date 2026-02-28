@@ -1,14 +1,13 @@
 import SwiftUI
 
 struct Level5_2Main: View {
-    // Level 1 specific configuration
-    // Example: Only Oscillators and Output allowed, maybe a tutorial MIDI playing?
-    let config = LevelConfiguration(
+    
+    let config = LevelConfig(
         showKeyboard: false,
-        showMidi: false, // Example: Enable MIDI with a hardcoded file
-        midiFilename: nil, // Example filename, assumes it exists in bundle
-        midiPlaybackSpeed: nil, // Fixed speed
-        availableNodes: ["Oscillator", "Output", "ADSR" ,"Pitch"], // Limited toolset
+        showMidi: false, 
+        midiFilename: nil, 
+        midiPlaybackSpeed: nil, 
+        availableNodes: ["Oscillator", "Output", "ADSR" ,"Pitch"], 
         initialNodes: [
             ("Oscillator", CGPoint(x: -400, y: -200), "Triangle"),
             ("ADSR", CGPoint(x: -100, y: -200), nil),
@@ -24,19 +23,18 @@ struct Level5_2Main: View {
         ],
         hintText: "Connect everything where one Oscillator node can only connect with one effect nodes at a time.",
         playDialogueOnStart: nil,
-        playVideoOnStart: nil, // Add your MP4 file with this name to Resources
+        playVideoOnStart: nil, 
         videoSize: CGSize(width: 1200, height: 500),
         
-        // Goals
         requiredConnections: [
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
             
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
-            LevelConfiguration.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
-            LevelConfiguration.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
-            LevelConfiguration.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
+            LevelConfig.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
+            LevelConfig.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "ADSR"),
+            LevelConfig.ConnectionGoal(fromType: "ADSR", toType: "Pitch"),
         ],
         requiredSettings: [
             
@@ -50,13 +48,3 @@ struct Level5_2Main: View {
         SynthLevelView(config: config)
     }
 }
-// 4-1 user learn what each thing does [/]
-// 4-2 user learn automation [/]
-// lv 5-1 4 osc 4 adsr connect [/]
-// 5-2 4 osc 4 adsr 3 pitch connect [/]
-// 5-3 all + tweak
-// -> sandbox / sound library (?)
-
-
-
-

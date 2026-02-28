@@ -33,7 +33,7 @@ struct WaveformShape: Shape {
         case .saw:
             path.move(to: CGPoint(x: 0, y: height))
             path.addLine(to: CGPoint(x: width, y: 0))
-            path.addLine(to: CGPoint(x: width, y: height)) // Return to bottom for fill
+            path.addLine(to: CGPoint(x: width, y: height)) 
         }
         
         return path

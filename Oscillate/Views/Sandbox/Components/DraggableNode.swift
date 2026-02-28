@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DraggableNode: View {
     let node: SynthNode
-    // Removed zoomScale as using coordinateSpace fixes the scaling issue
+    
     var onDragChange: (CGSize) -> Void
     var onMoveEnd: (CGPoint) -> Void
     var onStartWire: (CGPoint) -> Void
@@ -36,7 +36,7 @@ struct DraggableNode: View {
                 onRemove()
             }
             .gesture(
-                // Kept minimumDistance: 10 to allow Sliders inside NodeView to work
+                
                 DragGesture(minimumDistance: 10, coordinateSpace: .named("CanvasSpace"))
                     .updating($dragOffset) { value, state, _ in
                         state = value.translation
@@ -90,4 +90,3 @@ struct DraggableNode: View {
         return !(node is OscillatorNode)
     }
 }
-

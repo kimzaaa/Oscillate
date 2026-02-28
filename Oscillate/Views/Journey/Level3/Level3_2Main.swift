@@ -1,14 +1,13 @@
 import SwiftUI
 
 struct Level3_2Main: View {
-    // Level 1 specific configuration
-    // Example: Only Oscillators and Output allowed, maybe a tutorial MIDI playing?
-    let config = LevelConfiguration(
+    
+    let config = LevelConfig(
         showKeyboard: true,
-        showMidi: true, // Example: Enable MIDI with a hardcoded file
-        midiFilename: "lv3", // Example filename, assumes it exists in bundle
-        midiPlaybackSpeed: 0.7, // Fixed speed
-        availableNodes: ["Oscillator", "Output", "Pitch"], // Limited toolset
+        showMidi: true, 
+        midiFilename: "lv3", 
+        midiPlaybackSpeed: 0.7, 
+        availableNodes: ["Oscillator", "Output", "Pitch"], 
         initialNodes: [
             ("Oscillator", CGPoint(x: 200, y: 300), "Saw"),
             ("Pitch", CGPoint(x: 500, y: 300), nil),
@@ -19,21 +18,20 @@ struct Level3_2Main: View {
         ],
         hintText: "Remember, one effects node, can only be connected by one Oscillator node, or a chain concluding to it",
         playDialogueOnStart: nil,
-        playVideoOnStart: nil, // Add your MP4 file with this name to Resources
+        playVideoOnStart: nil, 
         videoSize: CGSize(width: 1200, height: 500),
         
-        // Goals
         requiredConnections: [
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
-            LevelConfiguration.ConnectionGoal(fromType: "Pitch", toType: "Output"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
-            LevelConfiguration.ConnectionGoal(fromType: "Pitch", toType: "Output"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
-            LevelConfiguration.ConnectionGoal(fromType: "Pitch", toType: "Output")
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Pitch", toType: "Output"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Pitch", toType: "Output"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Pitch"),
+            LevelConfig.ConnectionGoal(fromType: "Pitch", toType: "Output")
         ],
         requiredSettings: [
-            LevelConfiguration.SettingGoal(nodeType: "Pitch", settingName: "pitch", targetValue: 50, tolerance: 49.0),
-            LevelConfiguration.SettingGoal(nodeType: "Pitch", settingName: "pitch", targetValue: -50.0, tolerance: 49.0)
+            LevelConfig.SettingGoal(nodeType: "Pitch", settingName: "pitch", targetValue: 50, tolerance: 49.0),
+            LevelConfig.SettingGoal(nodeType: "Pitch", settingName: "pitch", targetValue: -50.0, tolerance: 49.0)
         ],
         successMessage: "You've just made a Unison effect!. It is very common in modern electronic musics!",
         nextLevelViewName: "Level4_1",
@@ -44,7 +42,3 @@ struct Level3_2Main: View {
         SynthLevelView(config: config)
     }
 }
-
-
-
-

@@ -10,7 +10,6 @@ struct GridBackground: View {
             let scaledSpacing = gridSize * zoom
             guard scaledSpacing > 5 else { return }
             
-            // Grid Color
             let gridColor = Color.gray.opacity(0.1)
             
             let startCol = Int((-pan.width / scaledSpacing).rounded(.down)) - 1

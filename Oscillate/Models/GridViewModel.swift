@@ -13,18 +13,15 @@ class GridViewModel: ObservableObject {
     private var connectionSFXPlayer: AVAudioPlayer?
     
     init() {
-        // Keeping your original "plop" for the output node
+        
         let out = OutputNode(position: CGPoint(x: 900, y: 300))
         nodes = [out]
         
-        // Output node is already attached to mainMixer in its class, 
-        // but we ensure it's in the engine context
         if let av = out.avNode, av !== engine.mainMixerNode {
             engine.attach(av)
         }
     }
     
-    // NEW: Function for the Toolbar to call
     func spawnNode(type: String, at position: CGPoint? = nil, waveform: String? = nil) {
         let spawnPoint = position ?? CGPoint(x: 300, y: 300)
         var newNode: SynthNode?
@@ -53,7 +50,7 @@ class GridViewModel: ObservableObject {
         
         if let node = newNode {
             if let av = node.avNode { 
-                // Don't re-attach main mixer if it's the output node wrapper
+                
                 if av !== engine.mainMixerNode {
                     engine.attach(av) 
                 }
@@ -62,30 +59,22 @@ class GridViewModel: ObservableObject {
         }
     }
     
-    // Configure the level based on the configuration object
-    func setupLevel(config: LevelConfiguration) {
-        // Clear all existing nodes and wires
+    func setupLevel(config: LevelConfig) {
+        
         self.nodes.removeAll()
         self.wires.removeAll()
         
-        // Stop engine to clear state if needed, though usually we keep it running.
-        // Detach existing nodes to be clean? 
-        // For simplicity in this demo, we just clear the array, but ideally we should detach AVNodes.
-        
-        // Re-initialize default output node
         let out = OutputNode(position: CGPoint(x: 900, y: 300))
         if let av = out.avNode, av !== engine.mainMixerNode {
             engine.attach(av)
         }
         self.nodes.append(out)
         
-        // Spawn configured initial nodes
         for (type, pos, waveform) in config.initialNodes {
             spawnNode(type: type, at: pos, waveform: waveform)
         }
     }
     
-    // Create Note Playing Helpers
     func noteOn(frequency: Float) {
         for node in nodes {
             if let osc = node as? OscillatorNode {
@@ -134,7 +123,7 @@ class GridViewModel: ObservableObject {
         
         for node in nodes {
             if node.id != sourceID {
-                // Adjusting based on your node width (150)
+                
                 let inputPos = CGPoint(x: node.position.x - 75, y: node.position.y)
                 let dist = hypot(currentLoc.x - inputPos.x, currentLoc.y - inputPos.y)
                 if dist < 40 {
@@ -189,13 +178,12 @@ class GridViewModel: ObservableObject {
     }
     
     func removeNode(_ id: UUID) {
-        // Remove connected wires first
+        
         let connectedWires = wires.filter { $0.startNodeID == id || $0.endNodeID == id }
         for wire in connectedWires {
             removeWire(wire)
         }
         
-        // Remove the node itself
         if let nodeIndex = nodes.firstIndex(where: { $0.id == id }) {
             let node = nodes[nodeIndex]
             if let avNode = node.avNode {
@@ -211,4 +199,3 @@ class GridViewModel: ObservableObject {
         draggingSourceID = nil
     }
 }
-

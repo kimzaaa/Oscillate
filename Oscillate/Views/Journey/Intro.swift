@@ -1,16 +1,16 @@
 import SwiftUI
 import AVKit
-import AVFoundation // Added to control the Silent/Mute switch behavior
+import AVFoundation 
 
 struct Intro: View {
     @State private var showLevel1 = false
-    // Your Cloudinary URI
+    
     let videoURLString = "https://res.cloudinary.com/dpduyofon/video/upload/v1772201341/m1_1_yu1xol.mp4"
     
     var body: some View {
         ZStack {
             if showLevel1 {
-                Level1Main() // Reverted to your original view call
+                Level1Main() 
                     .transition(.opacity)
             } else {
                 ZStack {
@@ -41,7 +41,7 @@ struct VideoContainerView: View {
     var body: some View {
         VideoPlayer(player: player)
             .onAppear {
-                // 1. Configure audio to play even if the physical Silent switch is ON
+                
                 setupAudio()
                 
                 let avPlayer = AVPlayer(url: url)
@@ -62,14 +62,12 @@ struct VideoContainerView: View {
             }
     }
     
-    // Helper to override system silence
     private func setupAudio() {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Audio Session error: \(error)")
+            
         }
     }
 }
-

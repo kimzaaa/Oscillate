@@ -12,5 +12,3 @@ struct BezierWire: Shape {
         return path
     }
 }
-
-

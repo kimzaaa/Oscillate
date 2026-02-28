@@ -4,7 +4,7 @@ import Combine
 class MidiSequencer: ObservableObject {
     @Published var isPlaying: Bool = false
     @Published var currentFile: URL?
-    @Published var playbackSpeed: Double = 1.0 // 0.1x to 5.0x
+    @Published var playbackSpeed: Double = 1.0 
     
     private var events: [MidiEvent] = []
     private var timer: Timer?
@@ -21,7 +21,7 @@ class MidiSequencer: ObservableObject {
         if let loadedEvents = parser.parse(url: url) {
             self.events = loadedEvents
             self.currentFile = url
-            print("Loaded \(events.count) MIDI events")
+            
         }
     }
     
@@ -51,7 +51,6 @@ class MidiSequencer: ObservableObject {
         timer?.invalidate()
         timer = nil
         
-        // Turn off all currently active notes
         for note in activeNotes {
             onNoteOff?(note)
         }
@@ -68,14 +67,12 @@ class MidiSequencer: ObservableObject {
         let delta = now - lastUpdateTime
         lastUpdateTime = now
         
-        // Advance song position by elapsed real time * speed
         songPosition += delta * playbackSpeed
         
         while eventIndex < events.count {
             let event = events[eventIndex]
             if event.timestamp <= songPosition {
-                // Trigger event
-                // Convert MIDI note to Frequency
+                
                 let freq = SimpleMidiParser.frequency(for: event.note)
                 
                 if event.type == .noteOn {

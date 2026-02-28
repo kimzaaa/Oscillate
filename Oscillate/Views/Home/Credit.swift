@@ -24,7 +24,6 @@ struct Credit: View {
     }
 }
 
-// A reusable view for credit lines
 struct CreditRow: View {
     let title: String
     let detail: String

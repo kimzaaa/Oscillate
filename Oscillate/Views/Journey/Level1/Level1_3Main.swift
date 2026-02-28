@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct Level1_3Main: View {
-    let config = LevelConfiguration(
+    let config = LevelConfig(
         showKeyboard: true,
         showMidi: false,
         midiFilename: nil,
@@ -16,9 +16,9 @@ struct Level1_3Main: View {
         playVideoOnStart: "https://res.cloudinary.com/dpduyofon/video/upload/v1772023269/ScreenRecording_02-25-2569_19-37-58_1_k47xue.mp4",
         videoSize: CGSize(width: 1200, height: 500),
         requiredConnections: [
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Output"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Output"),
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Output")
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Output"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Output"),
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Output")
         ],
         requiredSettings: [
         ],
@@ -31,7 +31,3 @@ struct Level1_3Main: View {
         SynthLevelView(config: config)
     }
 }
-
-
-
-

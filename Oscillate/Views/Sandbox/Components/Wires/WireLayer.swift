@@ -38,4 +38,3 @@ struct WireLayer: View {
         return CGPoint(x: currentPos.x + CGFloat(xOffset), y: currentPos.y)
     }
 }
-

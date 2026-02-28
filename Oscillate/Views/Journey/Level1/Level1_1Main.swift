@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct Level1_1Main: View {
-    // Level 1-1 configuration
-    // Example: Maybe now they need to change the waveform
-    let config = LevelConfiguration(
+    
+    let config = LevelConfig(
         showKeyboard: true,
         showMidi: false,
         midiFilename: nil,
@@ -17,11 +16,11 @@ struct Level1_1Main: View {
         playVideoOnStart: nil,
         videoSize: nil,
         requiredConnections: [
-            LevelConfiguration.ConnectionGoal(fromType: "Oscillator", toType: "Output")
+            LevelConfig.ConnectionGoal(fromType: "Oscillator", toType: "Output")
         ],
         requiredSettings: [],
         successMessage: "Sound confirmed. Navigation unlocked.",
-        nextLevelViewName: "Level1_2", // Assuming new level
+        nextLevelViewName: "Level1_2", 
         requireNoteInput: true
     )
     
@@ -29,4 +28,3 @@ struct Level1_1Main: View {
         SynthLevelView(config: config)
     }
 }
-
